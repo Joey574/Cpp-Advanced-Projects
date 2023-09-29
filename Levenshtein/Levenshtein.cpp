@@ -1,26 +1,13 @@
-#include <iostream>
-#include <thread>
-#include <conio.h>
+#include "includes.h"
+#include "mapThread.h"
 
 using namespace std;
 
 string firstWord;
 string secondWord;
 
+vector<mapThread> threads;
 int MAX_THREADS = 16;
-
-class mapThread {
-private:
-    int threadID;
-    string threadName;
-
-
-    mapThread(int threadID) {
-        this->threadID = threadID;
-        threadName = "\nT-" + threadID;
-        cout << threadName + " running";
-    }
-};
 
 int main()
 {
@@ -33,10 +20,19 @@ int main()
     cout << "Enter the second word\nInput: ";
     cin >> secondWord;
 
+    int test = 5;
+     
+    /*
     for (int i = 0; i < MAX_THREADS; i++) {
-        cout << "Thread " + i + " created";
-        thread thread(mapThread(i));
+        mapThread temp(i);
+        cout << "Thread " << i << " active";
+        thread t(temp);
+        cout << temp.getName() + " active";
     }
+    */
 
+    mapThread t;
+
+    thread thread_object(&mapThread::start, t, 1);
 
 }

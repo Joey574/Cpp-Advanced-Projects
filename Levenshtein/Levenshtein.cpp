@@ -24,20 +24,21 @@ int main()
 
     cout << "Creating Threads\n";
 
-    // works
-    //mapThread t1(1); thread t1Obj(&mapThread::start, t1, 1);
-    
-
     for (int i = 0; i < MAX_THREADS; i++) {
        
+        // create class instance
         mapThread temp(i);
 
+        // add class instance to vector
         threadClass.push_back(temp);
 
+        // add thread instance to vector and start it
         threadObj.push_back(thread(&mapThread::start, temp));
     }
 
-    cout << "Threads created\n";
+    cout << "Threads created\nPress space to begin";
+    
+    _getch();
 
     for (int i = 0; i < threadObj.size(); i++) {
         threadObj[i].join();

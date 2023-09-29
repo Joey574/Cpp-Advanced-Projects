@@ -9,10 +9,15 @@ private:
 public:
 
     mapThread(int threadID);
+
     void start();
+
+    // Getters --
+
     string getThreadName();
     int getThreadID();
-  
+
+    // -- Getters  
 };
 
 mapThread::mapThread(int threadID) {

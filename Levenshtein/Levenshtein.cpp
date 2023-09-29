@@ -7,6 +7,7 @@ string firstWord;
 string secondWord;
 
 vector<mapThread> threads;
+vector<thread> threadObj;
 int MAX_THREADS = 16;
 
 int main()
@@ -20,19 +21,17 @@ int main()
     cout << "Enter the second word\nInput: ";
     cin >> secondWord;
 
-    int test = 5;
-     
-    /*
     for (int i = 0; i < MAX_THREADS; i++) {
         mapThread temp(i);
-        cout << "Thread " << i << " active";
-        thread t(temp);
-        cout << temp.getName() + " active";
+        cout << "Thread " << i << " created";
+        threads.push_back(temp);
+        thread thread_obj(&mapThread::start, &temp, i);
+        threadObj.push_back(thread_obj);
+        cout << temp.getThreadName() + " active";
     }
-    */
 
-    mapThread t;
-
-    thread thread_object(&mapThread::start, t, 1);
+    for (thread t : threadObj) {
+        t.join();
+    }
 
 }

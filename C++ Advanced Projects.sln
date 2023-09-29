@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "C++ Advanced Projects", "C+
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Levenshtein", "Levenshtein\Levenshtein.vcxproj", "{7263EF29-1139-475E-A39D-78E59F76B7C3}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Learning fucking threads again", "Learning fucking threads again\Learning fucking threads again.vcxproj", "{9FDCB757-A240-4F88-BB4B-3676E087D2CB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +33,14 @@ Global
 		{7263EF29-1139-475E-A39D-78E59F76B7C3}.Release|x64.Build.0 = Release|x64
 		{7263EF29-1139-475E-A39D-78E59F76B7C3}.Release|x86.ActiveCfg = Release|Win32
 		{7263EF29-1139-475E-A39D-78E59F76B7C3}.Release|x86.Build.0 = Release|Win32
+		{9FDCB757-A240-4F88-BB4B-3676E087D2CB}.Debug|x64.ActiveCfg = Debug|x64
+		{9FDCB757-A240-4F88-BB4B-3676E087D2CB}.Debug|x64.Build.0 = Debug|x64
+		{9FDCB757-A240-4F88-BB4B-3676E087D2CB}.Debug|x86.ActiveCfg = Debug|Win32
+		{9FDCB757-A240-4F88-BB4B-3676E087D2CB}.Debug|x86.Build.0 = Debug|Win32
+		{9FDCB757-A240-4F88-BB4B-3676E087D2CB}.Release|x64.ActiveCfg = Release|x64
+		{9FDCB757-A240-4F88-BB4B-3676E087D2CB}.Release|x64.Build.0 = Release|x64
+		{9FDCB757-A240-4F88-BB4B-3676E087D2CB}.Release|x86.ActiveCfg = Release|Win32
+		{9FDCB757-A240-4F88-BB4B-3676E087D2CB}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

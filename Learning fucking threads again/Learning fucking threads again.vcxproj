@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{7263ef29-1139-475e-a39d-78e59f76b7c3}</ProjectGuid>
-    <RootNamespace>Levenshtein</RootNamespace>
+    <ProjectGuid>{9fdcb757-a240-4f88-bb4b-3676e087d2cb}</ProjectGuid>
+    <RootNamespace>Learningfuckingthreadsagain</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -127,11 +127,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Levenshtein.cpp" />
+    <ClCompile Include="Learning fucking threads again.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="includes.h" />
-    <ClInclude Include="mapThread.h" />
+    <ClInclude Include="base.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

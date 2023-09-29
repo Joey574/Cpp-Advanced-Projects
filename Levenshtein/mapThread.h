@@ -6,19 +6,22 @@ class mapThread {
 private:
     int threadID;
     string threadName;
-
-
 public:
 
+    mapThread(int threadID);
     void start();
     string getThreadName();
     int getThreadID();
   
 };
 
-void mapThread::start() {
+mapThread::mapThread(int threadID) {
     this->threadID = threadID;
-    threadName = "\nT-" + this->threadID;
+    threadName = "T-" + to_string(this->threadID);
+}
+
+void mapThread::start() {
+
 }
 
 string mapThread::getThreadName() {

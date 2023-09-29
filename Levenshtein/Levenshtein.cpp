@@ -10,6 +10,11 @@ vector<mapThread> threadClass;
 vector<thread> threadObj;
 int MAX_THREADS = 16;
 
+struct threadJobs {
+    int display = 0;
+    int fileRead = 0;
+};
+
 int main()
 {
     cout << "This is the basic multi-threaded Levenshtein in Cpp\n";

@@ -21,7 +21,7 @@ mapThread::mapThread(int threadID) {
 }
 
 void mapThread::start() {
-
+    cout << threadName << ": Online\n";
 }
 
 string mapThread::getThreadName() {

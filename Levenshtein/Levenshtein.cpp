@@ -6,7 +6,7 @@ using namespace std;
 string firstWord;
 string secondWord;
 
-vector<mapThread> threads;
+vector<mapThread> threadClass;
 vector<thread> threadObj;
 int MAX_THREADS = 16;
 
@@ -20,18 +20,26 @@ int main()
     system("CLS");
     cout << "Enter the second word\nInput: ";
     cin >> secondWord;
+    system("CLS");
+
+    cout << "Creating Threads\n";
+
+    // works
+    //mapThread t1(1); thread t1Obj(&mapThread::start, t1, 1);
+    
 
     for (int i = 0; i < MAX_THREADS; i++) {
+       
         mapThread temp(i);
-        cout << "Thread " << i << " created";
-        threads.push_back(temp);
-        thread thread_obj(&mapThread::start, &temp, i);
-        threadObj.push_back(thread_obj);
-        cout << temp.getThreadName() + " active";
+
+        threadClass.push_back(temp);
+
+        threadObj.push_back(thread(&mapThread::start, temp));
     }
 
-    for (thread t : threadObj) {
-        t.join();
-    }
+    cout << "Threads created\n";
 
+    for (int i = 0; i < threadObj.size(); i++) {
+        threadObj[i].join();
+    }
 }

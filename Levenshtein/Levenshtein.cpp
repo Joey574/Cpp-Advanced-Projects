@@ -23,9 +23,25 @@ int main()
     cin >> secondWord;
     system("CLS");
 
-    cout << "Loading file";
+    cout << "Loading file\n";
 
+    ifstream dictionary;
+
+    dictionary.open("dictionary.txt");
+
+    if (!dictionary.is_open())
+    {
+        printf("File not found\n");
+    }
+
+    string line;
+
+    while (getline(dictionary, line)) {
+
+    }
     
+    dictionary.close();
+    cout << "File loaded\n";
 
     cout << "Creating Threads\n";
 
@@ -44,6 +60,7 @@ int main()
     cout << "\nThreads created\nPress space to begin\n";
     
     _getch();
+    system("CLS");
 
     startThreads = true;
 

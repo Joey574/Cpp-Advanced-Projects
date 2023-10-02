@@ -20,6 +20,14 @@ public:
     // -- Getters  
 };
 
+string mapThread::getThreadName() {
+    return threadName;
+}
+
+int mapThread::getThreadID() {
+    return threadID;
+}
+
 mapThread::mapThread(int threadID) {
     this->threadID = threadID;
     threadName = "T-" + to_string(this->threadID);
@@ -29,15 +37,8 @@ void mapThread::start() {
     string out = threadName + ": Online\n";
     cout << out;
 
-    while (startThreads) {
+    while (!startThreads) {
         Sleep(1);
     }
 }
 
-string mapThread::getThreadName() {
-    return threadName;
-}
-
-int mapThread::getThreadID() {
-    return threadID;
-}

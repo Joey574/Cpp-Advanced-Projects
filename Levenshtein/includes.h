@@ -13,5 +13,7 @@
 #include <fstream>
 #include <cwchar>
 #include <algorithm>
+#include <unordered_map>
+#include <list>
 
 #include "utilities.h"

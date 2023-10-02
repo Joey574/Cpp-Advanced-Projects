@@ -26,8 +26,12 @@ mapThread::mapThread(int threadID) {
 }
 
 void mapThread::start() {
-    gotoxy(threadID * 10, threadID * 5);
-    cout << threadName << ": Online\n";
+    string out = threadName + ": Online\n";
+    cout << out;
+
+    while (startThreads) {
+        Sleep(1);
+    }
 }
 
 string mapThread::getThreadName() {

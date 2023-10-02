@@ -10,10 +10,6 @@ vector<mapThread> threadClass;
 vector<thread> threadObj;
 int MAX_THREADS = 16;
 
-struct threadJobs {
-    int display = 0;
-    int fileRead = 0;
-};
 
 int main()
 {
@@ -26,6 +22,10 @@ int main()
     cout << "Enter the second word\nInput: ";
     cin >> secondWord;
     system("CLS");
+
+    cout << "Loading file";
+
+    
 
     cout << "Creating Threads\n";
 
@@ -41,9 +41,11 @@ int main()
         threadObj.push_back(thread(&mapThread::start, temp));
     }
 
-    cout << "Threads created\nPress space to begin";
+    cout << "\nThreads created\nPress space to begin\n";
     
     _getch();
+
+    startThreads = true;
 
     for (int i = 0; i < threadObj.size(); i++) {
         threadObj[i].join();

@@ -57,14 +57,44 @@ int main()
         threadObj.push_back(thread(&mapThread::start, temp));
     }
 
-    cout << "\nThreads created\nPress space to begin\n";
-    
+    cout << "Threads created\nPress space to begin\n";
+
     _getch();
     system("CLS");
+
+    start = chrono::system_clock::now();
+    chrono::duration<double> duration;
+
+
+    string smallWord;
+    string bigWord;
+
+    string temp;
+
+    if (firstWord > secondWord) {
+        smallWord = secondWord;
+        bigWord = firstWord;
+    } else {
+        smallWord = firstWord;
+        bigWord = secondWord;
+    }
+
+    mapTarget = binarySearchFirstLength(smallWord);
+    duration = chrono::system_clock::now() - start;
+    cout << "Elapsed time (Binary search): " << duration.count() << "s\n";
+    cout << "Binary search return: " << mapTarget << endl;
 
     startThreads = true;
 
     for (int i = 0; i < threadObj.size(); i++) {
         threadObj[i].join();
     }
+
+    cout << "Threads joined\n";
+
+    duration = chrono::system_clock::now() - start;
+
+    cout << "Elapsed time (Map creation): " << duration.count() << "s\n";
+
+    return 0;
 }

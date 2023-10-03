@@ -40,5 +40,12 @@ void mapThread::start() {
     while (!startThreads) {
         Sleep(1);
     }
+
+    bool complete = false;
+
+    for (int i = 0; !complete; i++) {
+        int target = getTarget();
+        
+    }
 }
 

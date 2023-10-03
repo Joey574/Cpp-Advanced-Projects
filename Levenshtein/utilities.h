@@ -2,6 +2,22 @@
 
 using namespace std;
 
+
+// Global variables--
+
+bool startThreads = false;
+atomic_int mapTarget;
+
+chrono::system_clock::time_point start;
+chrono::system_clock::time_point end;
+
+vector<string> dictionaryList;
+
+// make concurrent map later, need to get libraries for it
+unordered_map <string, vector<string>> EditNeighbors;
+
+//--Global variables
+
 // Global methods--
 
 bool isEditDistance(string in1, string in2) {
@@ -41,8 +57,7 @@ bool isEditDistance(string in1, string in2) {
 
 int getTarget()
 {
-    mapTarget++;
-    return mapTarget - 1;
+    return mapTarget.fetch_add(1);
 }
 
 int binarySearchFirstLength(string word) {
@@ -72,18 +87,11 @@ int binarySearchFirstLength(string word) {
         }
     }
 
-    return out;
+    for (int i = out; dictionaryList[out].length() == len; i++) {
+        out--;
+    }
+
+    return out + 1;
 }
 
 //--Global methods
-
-// Global variables--
-
-vector<string> dictionaryList;
-bool startThreads = false;
-int mapTarget;
-
-// make concurrent map later, need to get libraries for it
-unordered_map <string, vector<string>> EditNeighbors;
-
-//--Global variables

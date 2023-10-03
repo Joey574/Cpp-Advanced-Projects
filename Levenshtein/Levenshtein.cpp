@@ -37,7 +37,7 @@ int main()
     string line;
 
     while (getline(dictionary, line)) {
-
+        dictionaryList.push_back(line);
     }
     
     dictionary.close();

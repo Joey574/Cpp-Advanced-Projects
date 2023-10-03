@@ -45,10 +45,41 @@ int getTarget()
     return mapTarget - 1;
 }
 
+int binarySearchFirstLength(string word) {
+    int len = word.length();
+
+    int min = 0;
+    int max = dictionaryList.size();
+    int loc = (max + min) / 2;
+
+    bool complete = false;
+    int out = -1;
+
+    for (int i = 0; !complete; i++) {
+        loc = (max + min) / 2;
+
+        if (dictionaryList[loc].length() == len) {
+            complete = true;
+            out = loc;
+        } else if (dictionaryList[loc].length() > len) {
+            max = loc;
+        } else {
+            min = loc;
+        }
+
+        if (min >= max) {
+            complete = true;
+        }
+    }
+
+    return out;
+}
+
 //--Global methods
 
 // Global variables--
 
+vector<string> dictionaryList;
 bool startThreads = false;
 int mapTarget;
 

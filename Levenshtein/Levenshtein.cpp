@@ -8,7 +8,7 @@ string secondWord;
 
 vector<mapThread> threadClass;
 vector<thread> threadObj;
-int MAX_THREADS = 16;
+const int MAX_THREADS = 16;
 
 
 int main()
@@ -26,18 +26,17 @@ int main()
     cout << "Loading file\n";
 
     ifstream dictionary;
+    string line;
 
     dictionary.open("dictionary.txt");
 
-    if (!dictionary.is_open())
-    {
+    if (!dictionary.is_open()) {
         printf("File not found\n");
     }
-
-    string line;
-
-    while (getline(dictionary, line)) {
-        dictionaryList.push_back(line);
+    else {
+        while (getline(dictionary, line)) {
+            dictionaryList.push_back(line);
+        }
     }
     
     dictionary.close();
@@ -65,13 +64,12 @@ int main()
     start = chrono::system_clock::now();
     chrono::duration<double> duration;
 
-
     string smallWord;
     string bigWord;
 
     string temp;
 
-    if (firstWord > secondWord) {
+    if (firstWord.length() > secondWord.length()) {
         smallWord = secondWord;
         bigWord = firstWord;
     } else {
@@ -81,7 +79,7 @@ int main()
 
     mapTarget = binarySearchFirstLength(smallWord);
     duration = chrono::system_clock::now() - start;
-    cout << "Elapsed time (Binary search): " << duration.count() << "s\n";
+    cout << "Elapsed time (Binary search): " << (duration.count() * 1000.00) << "ms\n";
     cout << "Binary search return: " << mapTarget << endl;
 
     startThreads = true;

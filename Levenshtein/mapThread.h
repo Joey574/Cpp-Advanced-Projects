@@ -45,7 +45,6 @@ void mapThread::start() {
 
     for (int i = 0; !complete; i++) {
         int target = getTarget();
-        
     }
 }
 

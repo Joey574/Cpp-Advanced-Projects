@@ -13,6 +13,10 @@ const int MAX_THREADS = 16;
 
 int main()
 {
+
+    // initialize wordLoc to non valid valuess
+    fill_n(wordLoc, 32, -1);
+
     cout << "This is the basic multi-threaded Levenshtein in Cpp\n";
     _getch();
     system("CLS");
@@ -61,14 +65,13 @@ int main()
     _getch();
     system("CLS");
 
+    // get system clock time to calculate time elapsed later
     start = chrono::system_clock::now();
     chrono::duration<double> duration;
 
-    string smallWord;
-    string bigWord;
-
     string temp;
 
+    // find smaller of the words
     if (firstWord.length() > secondWord.length()) {
         smallWord = secondWord;
         bigWord = firstWord;
@@ -77,7 +80,18 @@ int main()
         bigWord = secondWord;
     }
 
+    // set buffer sizes based off of word size
+    if (smallWord.length() > 5) {
+        smallBuffer = smallWord.length() / 3;
+    }
+    if (bigWord.length() > 7) {
+        bigBuffer = bigWord.length() / 3;
+    }
+
+    // get first instance of word of target length
     mapTarget = binarySearchFirstLength(smallWord);
+    
+    // binary time and info
     duration = chrono::system_clock::now() - start;
     cout << "Elapsed time (Binary search): " << (duration.count() * 1000.00) << "ms\n";
     cout << "Binary search return: " << mapTarget << endl;
@@ -89,6 +103,11 @@ int main()
     }
 
     cout << "Threads joined\n";
+
+    for (int i = 0; i < MAX_THREADS; i++) {
+        // figure out c++ equivalent of putAll
+        //EditNeighbors.insert(threadClass[i].getLocalMap());
+    }
 
     duration = chrono::system_clock::now() - start;
 

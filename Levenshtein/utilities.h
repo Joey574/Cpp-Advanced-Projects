@@ -6,10 +6,17 @@ using namespace std;
 // Global variables--
 
 bool startThreads = false;
+int wordLoc[32] = { 0 };
 atomic_int mapTarget;
+
+int smallBuffer;
+int bigBuffer;
 
 chrono::system_clock::time_point start;
 chrono::system_clock::time_point end;
+
+string smallWord;
+string bigWord;
 
 vector<string> dictionaryList;
 
@@ -61,7 +68,13 @@ int getTarget()
 }
 
 int binarySearchFirstLength(string word) {
+
     int len = word.length();
+
+    // memorization, check if already calculated
+    if (wordLoc[len] != -1) {
+        return wordLoc[len];
+    }
 
     int min = 0;
     int max = dictionaryList.size();
@@ -70,6 +83,7 @@ int binarySearchFirstLength(string word) {
     bool complete = false;
     int out = -1;
 
+    // binary search
     for (int i = 0; !complete; i++) {
         loc = (max + min) / 2;
 
@@ -87,11 +101,14 @@ int binarySearchFirstLength(string word) {
         }
     }
 
+    // find first instance of word of target length
     for (int i = out; dictionaryList[out].length() == len; i++) {
         out--;
     }
+    out++; // fix offset
 
-    return out + 1;
+    wordLoc[len] = out;
+    return out;
 }
 
 //--Global methods

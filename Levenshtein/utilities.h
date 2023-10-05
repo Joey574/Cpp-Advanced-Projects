@@ -12,8 +12,9 @@ atomic_int mapTarget;
 int smallBuffer;
 int bigBuffer;
 
-chrono::system_clock::time_point start;
-chrono::system_clock::time_point end;
+chrono::system_clock::time_point startTime;
+chrono::duration<double> duration;
+
 
 string smallWord;
 string bigWord;

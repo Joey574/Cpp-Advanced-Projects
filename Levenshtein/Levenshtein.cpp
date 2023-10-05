@@ -13,8 +13,7 @@ const int MAX_THREADS = 1;
 
 int main()
 {
-
-    // initialize wordLoc to non valid valuess
+    // initialize wordLoc to non valid values
     fill_n(wordLoc, 32, -1);
 
     cout << "This is the basic multi-threaded Levenshtein in Cpp\n";
@@ -46,28 +45,9 @@ int main()
     dictionary.close();
     cout << "File loaded\n";
 
-    cout << "Creating Threads\n";
-
-    for (int i = 0; i < MAX_THREADS; i++) {
-       
-        // create class instance
-        mapThread temp(i);
-
-        // add class instance to vector
-        threadClass.push_back(temp);
-
-        // add thread instance to vector and start it
-        threadObj.push_back(thread(&mapThread::start, temp));
-    }
-
-    cout << "Threads created\nPress space to begin\n";
-
+    cout << "Press space to begin\n";
     _getch();
     system("CLS");
-
-    // get system clock time to calculate time elapsed later
-    start = chrono::system_clock::now();
-    chrono::duration<double> duration;
 
     string temp;
 
@@ -88,11 +68,28 @@ int main()
         bigBuffer = bigWord.length() / 3;
     }
 
+    cout << "Creating Threads\n";
+
+    // get system clock time to calculate time elapsed later
+    startTime = chrono::system_clock::now();
+
     // get first instance of word of target length
     mapTarget = binarySearchFirstLength(smallWord);
+
+    for (int i = 0; i < MAX_THREADS; i++) {
+
+        // create class instance
+        mapThread temp;
+
+        // add class instance to vector
+        threadClass.push_back(temp);
+
+        // add thread instance to vector and start it
+        threadObj.push_back(thread(&mapThread::start, &temp, i));
+    }
     
     // binary time and info
-    duration = chrono::system_clock::now() - start;
+    duration = chrono::system_clock::now() - startTime;
     cout << "Elapsed time (Binary search): " << (duration.count() * 1000.00) << "ms\n";
     cout << "Binary search return: " << mapTarget << endl;
 
@@ -109,7 +106,7 @@ int main()
         //EditNeighbors.insert(threadClass[i].getLocalMap());
     }
 
-    duration = chrono::system_clock::now() - start;
+    duration = chrono::system_clock::now() - startTime;
 
     cout << "Elapsed time (Map creation): " << duration.count() << "s\n";
 

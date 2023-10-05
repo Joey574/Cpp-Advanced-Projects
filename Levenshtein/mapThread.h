@@ -11,9 +11,7 @@ private:
     unordered_map<string, vector<string>> EditNeighborsLoc;
 public:
 
-    mapThread(int threadID);
-
-    void start();
+    void start(int threadID);
 
     // Getters --
 
@@ -36,20 +34,13 @@ unordered_map<string, vector<string>> mapThread::getLocalMap() {
     return EditNeighborsLoc;
 }
 
-mapThread::mapThread(int threadID) {
+void mapThread::start(int threadID) {
+
+    unordered_map<string, vector<string>> EditNeighborsLoc;
+
     this->threadID = threadID;
-    threadName = "T-" + to_string(this->threadID);
+    threadName = "T-" + to_string(threadID);
     out = threadName + ": Online\n";
-    cout << out;
-
-}
-
-void mapThread::start() {
-    while (!startThreads) {
-        Sleep(1);
-    }
-
-    out = threadName + ": Running\n";
     cout << out;
 
     bool complete = false;
@@ -64,6 +55,7 @@ void mapThread::start() {
         neighbors.clear();
 
         for (int q = binarySearchFirstLength(word.substr(1)); q < dictionaryList.size(); q++) {
+
             string temp = dictionaryList[q];
             if (temp.length() > word.length() + 1) {
                 break;

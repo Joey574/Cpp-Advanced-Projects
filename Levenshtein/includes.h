@@ -15,5 +15,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <list>
+#include <map>
+#include <concurrent_unordered_map.h>
 
 #include "utilities.h"

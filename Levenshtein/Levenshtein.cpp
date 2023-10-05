@@ -8,7 +8,7 @@ string secondWord;
 
 vector<mapThread> threadClass;
 vector<thread> threadObj;
-const int MAX_THREADS = 16;
+const int MAX_THREADS = 1;
 
 
 int main()
@@ -112,6 +112,8 @@ int main()
     duration = chrono::system_clock::now() - start;
 
     cout << "Elapsed time (Map creation): " << duration.count() << "s\n";
+
+    cout << "Map size: " << threadClass[0].getLocalMap().size();
 
     return 0;
 }

@@ -56,7 +56,7 @@ void mapThread::start() {
     vector<string> neighbors;
     string word;
 
-    for (int i = 0; word.length() < bigWord.length() + bigBuffer; i++) {
+    for (int i = 0; word.length() <= bigWord.length() + bigBuffer; i++) {
 
         int target = getTarget();
         word = dictionaryList[target];
@@ -74,7 +74,8 @@ void mapThread::start() {
         EditNeighborsLoc[word] = neighbors;
     }
 
-    out = threadName + ": Complete";
+    cout << "local size: " << EditNeighborsLoc.size() << endl;
+    out = threadName + ": Complete\n";
     cout << out;
 }
 

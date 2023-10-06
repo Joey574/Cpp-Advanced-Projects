@@ -41,7 +41,7 @@ int main()
             dictionaryList.push_back(line);
         }
     }
-    
+
     dictionary.close();
     cout << "File loaded\n";
 
@@ -55,7 +55,8 @@ int main()
     if (firstWord.length() > secondWord.length()) {
         smallWord = secondWord;
         bigWord = firstWord;
-    } else {
+    }
+    else {
         smallWord = firstWord;
         bigWord = secondWord;
     }
@@ -87,14 +88,13 @@ int main()
         // add thread instance to vector and start it
         threadObj.push_back(thread(&mapThread::start, &temp, i));
     }
-    
+
     // binary time and info
-
     duration = chrono::system_clock::now() - startTime;
-
     cout << "Elapsed time (Binary search): " << (duration.count() * 1000.00) << "\n";
     cout << "Binary search returnL " << mapTarget << endl;;
 
+    // join threads after complete
     for (int i = 0; i < threadObj.size(); i++) {
         threadObj[i].join();
     }
@@ -107,9 +107,7 @@ int main()
     }
 
     duration = chrono::system_clock::now() - startTime;
-
     cout << "Elapsed time (Map creation): " << duration.count() << "s\n";
-
     cout << "Map size: " << threadClass[0].getLocalMap().size();
 
     return 0;

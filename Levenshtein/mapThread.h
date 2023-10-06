@@ -8,7 +8,7 @@ private:
     string threadName;
     string out;
 
-    unordered_map<string, vector<string>> EditNeighborsLoc;
+    void setMap(unordered_map<string, vector<string>> in);
 public:
 
     void start(int threadID);
@@ -30,13 +30,7 @@ int mapThread::getThreadID() {
     return threadID;
 }
 
-unordered_map<string, vector<string>> mapThread::getLocalMap() {
-    return EditNeighborsLoc;
-}
-
-void mapThread::start(int threadID) {
-
-    unordered_map<string, vector<string>> EditNeighborsLoc;
+void mapThread::start(int threadID, unordered_map<string, vector<string>> &EditNeighborsLoc) {
 
     this->threadID = threadID;
     threadName = "T-" + to_string(threadID);
@@ -66,8 +60,8 @@ void mapThread::start(int threadID) {
         EditNeighborsLoc[word] = neighbors;
     }
 
-    cout << "local size: " << EditNeighborsLoc.size() << endl;
+    setMap(EditNeighborsLoc);
+    cout << "Local size: " << EditNeighborsLoc.size() << endl;
     out = threadName + ": Complete\n";
     cout << out;
 }
-

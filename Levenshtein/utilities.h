@@ -5,7 +5,6 @@ using namespace std;
 
 // Global variables--
 
-bool startThreads = false;
 int wordLoc[32] = { 0 };
 atomic_int mapTarget;
 

@@ -89,11 +89,11 @@ int main()
     }
     
     // binary time and info
-    duration = chrono::system_clock::now() - startTime;
-    cout << "Elapsed time (Binary search): " << (duration.count() * 1000.00) << "ms\n";
-    cout << "Binary search return: " << mapTarget << endl;
 
-    startThreads = true;
+    duration = chrono::system_clock::now() - startTime;
+
+    cout << "Elapsed time (Binary search): " << (duration.count() * 1000.00) << "\n";
+    cout << "Binary search returnL " << mapTarget << endl;;
 
     for (int i = 0; i < threadObj.size(); i++) {
         threadObj[i].join();

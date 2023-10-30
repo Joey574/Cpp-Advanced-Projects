@@ -19,6 +19,7 @@ string smallWord;
 string bigWord;
 
 vector<string> dictionaryList;
+vector<string> dictionaryList;
 
 // make concurrent map later, need to get libraries for it
 unordered_map <string, vector<string>> EditNeighbors;

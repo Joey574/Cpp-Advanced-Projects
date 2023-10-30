@@ -86,13 +86,13 @@ int main()
         threadClass.push_back(temp);
 
         // add thread instance to vector and start it
-        threadObj.push_back(thread(&mapThread::start, &temp, i));
+        threadObj.push_back(thread(&mapThread::start, temp, i));
     }
 
     // binary time and info
     duration = chrono::system_clock::now() - startTime;
     cout << "Elapsed time (Binary search): " << (duration.count() * 1000.00) << "\n";
-    cout << "Binary search returnL " << mapTarget << endl;;
+    cout << "Binary search return: " << mapTarget << endl;;
 
     // join threads after complete
     for (int i = 0; i < threadObj.size(); i++) {

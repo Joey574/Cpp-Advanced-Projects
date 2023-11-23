@@ -1,9 +1,0 @@
-namespace LearningMASM
-{
-    [default_interface]
-    runtimeclass MasmTest : Windows.UI.Xaml.Controls.Page
-    {
-        MasmTest();
-        Int32 MyProperty;
-    }
-}

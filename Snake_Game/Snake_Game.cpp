@@ -18,6 +18,7 @@ enum direction {
 };
 
 void draw_board(std::vector<std::vector<tile_type>> game_board);
+std::vector <std::vector<tile_type>> generate_snake(std::vector<std::vector<tile_type>> game_board);
 std::vector <std::vector<tile_type>> generate_food(std::vector<std::vector<tile_type>> game_board);
 std::vector<std::vector<tile_type>> move_snake(std::vector<std::vector < tile_type>> game_board, direction dir);
 
@@ -25,7 +26,7 @@ std::vector<pos> snake;
 
 int main()
 {
-	int width = 20;
+	int width = 30;
 	int height = 20;
 
 	std::vector<std::vector<tile_type>> game_board;
@@ -34,15 +35,7 @@ int main()
 		game_board.emplace_back(std::vector<tile_type>(width, tile_type::none));
 	}
 
-	pos p; p.x = width / 2; p.y = height / 2;
-	snake.push_back(p);
-	game_board[p.y][p.x] = tile_type::head;
-	p.x--;
-	snake.push_back(p);
-	game_board[p.y][p.x] = tile_type::body;
-	p.x--;
-	snake.push_back(p);
-	game_board[p.y][p.x] = tile_type::body;
+	game_board = generate_snake(game_board);
 
 	const int targetFPS = 5;
 	const std::chrono::milliseconds frameDuration(1000 / targetFPS);
@@ -82,6 +75,19 @@ int main()
 			std::this_thread::sleep_for(sleepTime);
 		}
 	}
+}
+
+std::vector<std::vector<tile_type>> generate_snake(std::vector<std::vector<tile_type>> game_board) {
+	pos p; p.x = game_board[0].size() / 2; p.y = game_board.size() / 2;
+	snake.push_back(p);
+	game_board[p.y][p.x] = tile_type::head;
+	p.x--;
+	snake.push_back(p);
+	game_board[p.y][p.x] = tile_type::body;
+	p.x--;
+	snake.push_back(p);
+	game_board[p.y][p.x] = tile_type::body;
+	return game_board;
 }
 
 std::vector<std::vector<tile_type>> generate_food(std::vector<std::vector<tile_type>> game_board) {
@@ -131,9 +137,20 @@ std::vector<std::vector<tile_type>> move_snake(std::vector<std::vector<tile_type
 		snake[0].x++;
 	}
 
+	// check for snake out of bounds
+	if (snake[0].y < 0 || snake[0].x < 0 || snake[0].y >= game_board.size() || snake[0].x >= game_board[0].size()) {
+
+		for (int i = 1; i < snake.size(); i++) {
+			game_board[snake[i].y][snake[i].x] = tile_type::none;
+		}
+
+		snake.clear();
+		game_board = generate_snake(game_board);
+	}
+
+	// check for collisions with food
 	if (game_board[snake[0].y][snake[0].x] == tile_type::food) {
-		pos p = snake[snake.size() - 1];
-		snake.push_back(p);
+		snake.push_back(snake[snake.size() - 1]);
 		game_board = generate_food(game_board);
 	}
 

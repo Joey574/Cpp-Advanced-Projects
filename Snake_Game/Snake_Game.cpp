@@ -18,6 +18,7 @@ enum direction {
 };
 
 void draw_board(std::vector<std::vector<tile_type>> game_board);
+direction manual_snake_input(direction dir);
 std::vector <std::vector<tile_type>> generate_snake(std::vector<std::vector<tile_type>> game_board);
 std::vector <std::vector<tile_type>> generate_food(std::vector<std::vector<tile_type>> game_board);
 std::vector<std::vector<tile_type>> move_snake(std::vector<std::vector < tile_type>> game_board, direction dir);
@@ -53,45 +54,51 @@ int main()
 		// Game loop here
 
 		// Check for key press and change direction
-		// TODO: move into user input function
-		if (_kbhit()) {
-			char key = _getch();
 
-			if (key == 'w') {
-				dir = direction::up;
-			} else if (key == 'a') {
-				dir = direction::left;
-			} else if (key == 's') {
-				dir = direction::down;
-			} else if (key == 'd') {
-				dir = direction::right;
-			}
-		}
+		dir = manual_snake_input(dir);
 
 		// TODO: Feed game state into nn to make decision
 
 		game_board = move_snake(game_board, dir);
 
-		//std::cout << "\u001b[H";
-		//draw_board(game_board);
+		std::cout << "\u001b[H";
+		draw_board(game_board);
 
-		i++;
-
-		auto elapsed = std::chrono::high_resolution_clock::now() - start;
-		auto sleepTime = frameDuration - elapsed;
-
+		/*i++;
 		auto t = std::chrono::high_resolution_clock::now() - begin_clock;
 		if (t >= std::chrono::seconds(1)) {
 			std::cout << i << std::endl;
 			begin_clock = std::chrono::high_resolution_clock::now();
 			i = 0;
-		}
-
-
-		/*if (sleepTime > std::chrono::milliseconds(0)) {
-			std::this_thread::sleep_for(sleepTime);
 		}*/
+
+		auto elapsed = std::chrono::high_resolution_clock::now() - start;
+		auto sleepTime = frameDuration - elapsed;
+
+		if (sleepTime > std::chrono::milliseconds(0)) {
+			std::this_thread::sleep_for(sleepTime);
+		}
 	}
+}
+
+direction manual_snake_input(direction dir) {
+	if (_kbhit()) {
+		char key = _getch();
+
+		if (key == 'w') {
+			dir = direction::up;
+		}
+		else if (key == 'a') {
+			dir = direction::left;
+		}
+		else if (key == 's') {
+			dir = direction::down;
+		}
+		else if (key == 'd') {
+			dir = direction::right;
+		}
+	}
+	return dir;
 }
 
 std::vector<std::vector<tile_type>> generate_snake(std::vector<std::vector<tile_type>> game_board) {

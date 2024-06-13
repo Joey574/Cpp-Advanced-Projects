@@ -26,7 +26,7 @@ std::vector<pos> snake;
 
 int main()
 {
-	int width = 30;
+	int width = 20;
 	int height = 20;
 
 	std::vector<std::vector<tile_type>> game_board;
@@ -39,9 +39,13 @@ int main()
 
 	const int targetFPS = 5;
 	const std::chrono::milliseconds frameDuration(1000 / targetFPS);
-	direction dir = direction::right;
 
+	// Initialize food and start direction
+	direction dir = direction::right;
 	game_board = generate_food(game_board);
+
+	auto begin_clock = std::chrono::high_resolution_clock::now();
+	int i = 0;
 
 	while (true) {
 		auto start = std::chrono::high_resolution_clock::now();
@@ -49,6 +53,7 @@ int main()
 		// Game loop here
 
 		// Check for key press and change direction
+		// TODO: move into user input function
 		if (_kbhit()) {
 			char key = _getch();
 
@@ -63,17 +68,29 @@ int main()
 			}
 		}
 
+		// TODO: Feed game state into nn to make decision
+
 		game_board = move_snake(game_board, dir);
 
-		std::cout << "\u001b[H";
-		draw_board(game_board);
+		//std::cout << "\u001b[H";
+		//draw_board(game_board);
+
+		i++;
 
 		auto elapsed = std::chrono::high_resolution_clock::now() - start;
 		auto sleepTime = frameDuration - elapsed;
 
-		if (sleepTime > std::chrono::milliseconds(0)) {
-			std::this_thread::sleep_for(sleepTime);
+		auto t = std::chrono::high_resolution_clock::now() - begin_clock;
+		if (t >= std::chrono::seconds(1)) {
+			std::cout << i << std::endl;
+			begin_clock = std::chrono::high_resolution_clock::now();
+			i = 0;
 		}
+
+
+		/*if (sleepTime > std::chrono::milliseconds(0)) {
+			std::this_thread::sleep_for(sleepTime);
+		}*/
 	}
 }
 
@@ -114,16 +131,16 @@ std::vector<std::vector<tile_type>> generate_food(std::vector<std::vector<tile_t
 
 std::vector<std::vector<tile_type>> move_snake(std::vector<std::vector<tile_type>> game_board, direction dir) {
 
-	// remove tail
+	// remove tail and set head
 	game_board[snake[snake.size() - 1].y][snake[snake.size() - 1].x] = tile_type::none;
+	game_board[snake[0].y][snake[0].x] = tile_type::body;
 
-	// update snake position
+	// update snake positions
 	for (int i = snake.size() - 1; i > 0; i--) {
 		snake[i] = snake[i - 1];
 	}
 
-	// set head -> body, update head location
-	game_board[snake[0].y][snake[0].x] = tile_type::body;
+	// update head locations
 	if (dir == direction::up) {
 		snake[0].y--;
 	}

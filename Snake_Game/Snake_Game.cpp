@@ -4,26 +4,29 @@
 #include <chrono>
 #include <thread>
 #include <conio.h>
-#include <Windows.h>
 
 struct pos {
 	int x;
 	int y;
 };
-enum tile_type {
+enum class tile_type {
 	none, food, body, head
 };
-enum direction {
+enum class direction {
 	up, down, left, right
 };
 
 void draw_board(std::vector<std::vector<tile_type>> game_board);
-direction manual_snake_input(direction dir);
+void manual_food_snake_input(direction& snake_dir, direction& food_dir);
 std::vector <std::vector<tile_type>> generate_snake(std::vector<std::vector<tile_type>> game_board);
 std::vector <std::vector<tile_type>> generate_food(std::vector<std::vector<tile_type>> game_board);
-std::vector<std::vector<tile_type>> move_snake(std::vector<std::vector < tile_type>> game_board, direction dir);
+std::vector <std::vector<tile_type>> update_snake(std::vector<std::vector<tile_type>> game_board, direction snake_dir);
+std::vector <std::vector<tile_type>> update_food(std::vector<std::vector<tile_type>> game_board, direction food_dir);
+std::vector <std::vector<tile_type>> check_collisions(std::vector<std::vector<tile_type>> game_board);
+
 
 std::vector<pos> snake;
+pos food;
 
 int main()
 {
@@ -42,35 +45,30 @@ int main()
 	const std::chrono::milliseconds frameDuration(1000 / targetFPS);
 
 	// Initialize food and start direction
-	direction dir = direction::right;
+	direction snake_dir = direction::right;
+	direction food_dir = direction::right;
 	game_board = generate_food(game_board);
 
 	auto begin_clock = std::chrono::high_resolution_clock::now();
-	int i = 0;
+
+	int food_step = 1;
 
 	while (true) {
 		auto start = std::chrono::high_resolution_clock::now();
 
-		// Game loop here
+		manual_food_snake_input(snake_dir, food_dir);
 
-		// Check for key press and change direction
+		game_board = update_snake(game_board, snake_dir);
 
-		dir = manual_snake_input(dir);
+		if (food_step == 2) {
+			food_step = 0;
+			game_board = update_food(game_board, food_dir);
+		}
 
-		// TODO: Feed game state into nn to make decision
-
-		game_board = move_snake(game_board, dir);
+		game_board = check_collisions(game_board);
 
 		std::cout << "\u001b[H";
 		draw_board(game_board);
-
-		/*i++;
-		auto t = std::chrono::high_resolution_clock::now() - begin_clock;
-		if (t >= std::chrono::seconds(1)) {
-			std::cout << i << std::endl;
-			begin_clock = std::chrono::high_resolution_clock::now();
-			i = 0;
-		}*/
 
 		auto elapsed = std::chrono::high_resolution_clock::now() - start;
 		auto sleepTime = frameDuration - elapsed;
@@ -78,28 +76,43 @@ int main()
 		if (sleepTime > std::chrono::milliseconds(0)) {
 			std::this_thread::sleep_for(sleepTime);
 		}
+		food_step++;
 	}
 }
 
-direction manual_snake_input(direction dir) {
+
+void manual_food_snake_input(direction &snake_dir, direction &food_dir) {
 	if (_kbhit()) {
 		char key = _getch();
 
 		if (key == 'w') {
-			dir = direction::up;
+			snake_dir = direction::up;
 		}
 		else if (key == 'a') {
-			dir = direction::left;
+			snake_dir = direction::left;
 		}
 		else if (key == 's') {
-			dir = direction::down;
+			snake_dir = direction::down;
 		}
 		else if (key == 'd') {
-			dir = direction::right;
+			snake_dir = direction::right;
+		}
+
+		if (key == 'i') {
+			food_dir = direction::up;
+		}
+		else if (key == 'j') {
+			food_dir = direction::left;
+		}
+		else if (key == 'k') {
+			food_dir = direction::down;
+		}
+		else if (key == 'l') {
+			food_dir = direction::right;
 		}
 	}
-	return dir;
 }
+
 
 std::vector<std::vector<tile_type>> generate_snake(std::vector<std::vector<tile_type>> game_board) {
 	pos p; p.x = game_board[0].size() / 2; p.y = game_board.size() / 2;
@@ -127,8 +140,9 @@ std::vector<std::vector<tile_type>> generate_food(std::vector<std::vector<tile_t
 		int rand_x = distrib(gen);
 		int rand_y = distrib(gen);
 
-		if (game_board[rand_x][rand_y] == 0) {
-			game_board[rand_x][rand_y] = tile_type::food;
+		if (game_board[rand_y][rand_x] == tile_type::none) {
+			game_board[rand_y][rand_x] = tile_type::food;
+			food.x = rand_x; food.y = rand_y;
 			break;
 		}
 	}
@@ -136,8 +150,8 @@ std::vector<std::vector<tile_type>> generate_food(std::vector<std::vector<tile_t
 	return game_board;
 }
 
-std::vector<std::vector<tile_type>> move_snake(std::vector<std::vector<tile_type>> game_board, direction dir) {
 
+std::vector<std::vector<tile_type>> update_snake(std::vector<std::vector<tile_type>> game_board, direction snake_dir) {
 	// remove tail and set head
 	game_board[snake[snake.size() - 1].y][snake[snake.size() - 1].x] = tile_type::none;
 	game_board[snake[0].y][snake[0].x] = tile_type::body;
@@ -147,19 +161,42 @@ std::vector<std::vector<tile_type>> move_snake(std::vector<std::vector<tile_type
 		snake[i] = snake[i - 1];
 	}
 
-	// update head locations
-	if (dir == direction::up) {
+	// update head location
+	if (snake_dir == direction::up) {
 		snake[0].y--;
 	}
-	else if (dir == direction::down) {
+	else if (snake_dir == direction::down) {
 		snake[0].y++;
 	}
-	else if (dir == direction::left) {
+	else if (snake_dir == direction::left) {
 		snake[0].x--;
 	}
-	else if (dir == direction::right) {
+	else if (snake_dir == direction::right) {
 		snake[0].x++;
 	}
+	return game_board;
+}
+
+std::vector<std::vector<tile_type>> update_food(std::vector<std::vector<tile_type>> game_board, direction food_dir) {
+	// update food position
+	game_board[food.y][food.x] = tile_type::none;
+	if (food_dir == direction::up) {
+		food.y--;
+	}
+	else if (food_dir == direction::down) {
+		food.y++;
+	}
+	else if (food_dir == direction::left) {
+		food.x--;
+	}
+	else if (food_dir == direction::right) {
+		food.x++;
+	}
+
+	return game_board;
+}
+
+std::vector<std::vector<tile_type>> check_collisions(std::vector<std::vector<tile_type>> game_board) {
 
 	// check for snake out of bounds
 	if (snake[0].y < 0 || snake[0].x < 0 || snake[0].y >= game_board.size() || snake[0].x >= game_board[0].size()) {
@@ -172,16 +209,40 @@ std::vector<std::vector<tile_type>> move_snake(std::vector<std::vector<tile_type
 		game_board = generate_snake(game_board);
 	}
 
-	// check for collisions with food
-	if (game_board[snake[0].y][snake[0].x] == tile_type::food) {
-		snake.push_back(snake[snake.size() - 1]);
+	// check for food out of bounds
+	if (food.x < 0 || food.y < 0 || food.x >= game_board[0].size() || food.y >= game_board.size()) {
 		game_board = generate_food(game_board);
+
+		int x = std::max(0, std::min((int)(game_board[0].size()), food.x));
+		int y = std::max(0, std::min((int)(game_board.size()), food.y));
+
+		game_board[y][x] == tile_type::none;
 	}
 
+	// check for collision within snake
+	if (game_board[snake[0].y][snake[0].x] == tile_type::body) {
+		for (int i = 1; i < snake.size(); i++) {
+			game_board[snake[i].y][snake[i].x] = tile_type::none;
+		}
+
+		snake.clear();
+		game_board = generate_snake(game_board);
+	}
+
+	// check for collisions with food
+	for (int i = 0; i < snake.size(); i++) {
+		if (snake[i].x == food.x && snake[i].y == food.y) {
+			snake.push_back(snake[snake.size() - 1]);
+			game_board = generate_food(game_board);
+		}
+	}
+
+	game_board[food.y][food.x] = tile_type::food;
 	game_board[snake[0].y][snake[0].x] = tile_type::head;
 
 	return game_board;
 }
+
 
 void draw_board(std::vector<std::vector<tile_type>> game_board) {
 

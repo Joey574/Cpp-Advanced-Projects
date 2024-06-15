@@ -5,6 +5,8 @@
 #include <thread>
 #include <conio.h>
 
+#include "Matrix.h"
+
 struct pos {
 	int x;
 	int y;

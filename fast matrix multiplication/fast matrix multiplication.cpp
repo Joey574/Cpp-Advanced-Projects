@@ -47,22 +47,21 @@ int main()
 {
 	SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS);
 
-	//run_test("bad_dot_prod", bad_dot_prod);
-	//run_test("base_dot_prod", base_dot_prod);
-	//run_test("parallel_dot_prod", parallel_dot_prod);
+	run_test("bad_dot_prod", bad_dot_prod);
+	run_test("base_dot_prod", base_dot_prod);
+	run_test("parallel_dot_prod", parallel_dot_prod);
 
-	//run_test("simd_dot_prod", simd_dot_prod);
-	//run_test("parallel_simd_dot_prod", parallel_simd_dot_prod);
-	//run_test("simd_ma_unrolled_dot_prod", simd_ma_unrolled_dot_prod);
-	//run_test("parallel_simd_ma_unrolled_dot_prod", parallel_simd_ma_unrolled_dot_prod);
+	run_test("simd_dot_prod", simd_dot_prod);
+	run_test("parallel_simd_dot_prod", parallel_simd_dot_prod);
+	run_test("simd_ma_unrolled_dot_prod", simd_ma_unrolled_dot_prod);
+	run_test("parallel_simd_ma_unrolled_dot_prod", parallel_simd_ma_unrolled_dot_prod);
 
-	//run_test("blocked_dot_prod", blocked_dot_prod);
+	run_test("blocked_dot_prod", blocked_dot_prod);
 	run_test("parallel_blocked_dot_prod", parallel_blocked_dot_prod);
-	//run_test("blocked_simd_dot_prod", blocked_simd_dot_prod);
+	run_test("blocked_simd_dot_prod", blocked_simd_dot_prod);
 	run_test("parallel_blocked_simd_dot_prod", parallel_blocked_simd_dot_prod);
-	//run_test("blocked_simd_ma_unrolled_dot_prod", blocked_simd_ma_unrolled_dot_prod);
+	run_test("blocked_simd_ma_unrolled_dot_prod", blocked_simd_ma_unrolled_dot_prod);
 	run_test("parallel_blocked_simd_ma_unrolled_dot_prod", parallel_blocked_simd_ma_unrolled_dot_prod);
-
 
 	return 0;
 }

@@ -9,6 +9,10 @@
 
 #define BLOCK_SIZE 64
 
+alignas(64) float local_a[BLOCK_SIZE * BLOCK_SIZE];
+alignas(64) float local_b[BLOCK_SIZE * BLOCK_SIZE];
+alignas(64) float local_c[BLOCK_SIZE * BLOCK_SIZE];
+
 #define RED_TEXT 4
 #define GREEN_TEXT 10
 #define WHITE_TEXT 7
@@ -16,10 +20,13 @@
 #define YELLOW_TEXT 6
 #define PURPLE_TEXT 13
 
+
 struct matrix {
 	size_t rows;
 	size_t columns;
-	std::vector<float> matrix;
+	std::vector<float> _matrix;
+
+	matrix() : rows(0), columns(0) {};
 };
 
 std::string matrix_to_string(matrix a);
@@ -71,7 +78,7 @@ std::string matrix_to_string(matrix a) {
 
 	for (int r = 0; r < a.rows; r++) {
 		for (int c = 0; c < a.columns; c++) {
-			out.append(std::to_string(a.matrix[r * a.columns + c])).append(" ");
+			out.append(std::to_string(a._matrix[r * a.columns + c])).append(" ");
 		}
 		out.append("\n");
 	}
@@ -84,9 +91,9 @@ void random_init(matrix& a) {
 
 	std::uniform_real_distribution<float> dist(-0.5f, 0.5f);
 
-	a.matrix = std::vector<float>(a.rows * a.columns);
+	a._matrix = std::vector<float>(a.rows * a.columns);
 	for (int i = 0; i < a.rows * a.columns; i++) {
-		a.matrix[i] = dist(gen);
+		a._matrix[i] = dist(gen);
 	}
 }
 
@@ -132,12 +139,12 @@ void run_test(std::string name, matrix(*dot)(const matrix&, const matrix&)) {
 
 matrix bad_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
-	c.matrix = std::vector<float>(a.rows * b.columns, 0);
+	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
 	for (size_t i = 0; i < a.rows; i++) {
 		for (size_t j = 0; j < b.columns; j++) {
 			for (size_t k = 0; k < b.rows; k++) {
-				c.matrix[i * b.columns + j] += a.matrix[i * a.columns + j] * b.matrix[k * b.columns + j];
+				c._matrix[i * b.columns + j] += a._matrix[i * a.columns + j] * b._matrix[k * b.columns + j];
 			}
 		}
 	}
@@ -146,12 +153,12 @@ matrix bad_dot_prod(const matrix& a, const matrix& b) {
 }
 matrix base_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
-	c.matrix = std::vector<float>(a.rows * b.columns, 0);
+	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
 	for (size_t i = 0; i < a.rows; i++) {
 		for (size_t j = 0; j < b.rows; j++) {
 			for (size_t k = 0; k < b.columns; k++) {
-				c.matrix[i * b.columns + k] += a.matrix[i * a.columns + k] * b.matrix[j * b.columns + k];
+				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + k] * b._matrix[j * b.columns + k];
 			}
 		}
 	}
@@ -160,13 +167,13 @@ matrix base_dot_prod(const matrix& a, const matrix& b) {
 }
 matrix parallel_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
-	c.matrix = std::vector<float>(a.rows * b.columns, 0);
+	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
 	#pragma omp parallel for
 	for (int i = 0; i < a.rows; i++) {
 		for (int j = 0; j < b.rows; j++) {
 			for (int k = 0; k < b.columns; k++) {
-				c.matrix[i * b.columns + k] += a.matrix[i * a.columns + k] * b.matrix[j * b.columns + k];
+				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + k] * b._matrix[j * b.columns + k];
 			}
 		}
 	}
@@ -176,23 +183,23 @@ matrix parallel_dot_prod(const matrix& a, const matrix& b) {
 
 matrix simd_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
-	c.matrix = std::vector<float>(a.rows * b.columns, 0);
+	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
 	for (size_t i = 0; i < a.rows; i++) {
 		for (size_t j = 0; j < b.rows; j++) {
 
 			size_t k = 0;
 			for (; k + 8 <= b.columns; k += 8) {
-				_mm256_store_ps(&c.matrix[i * b.columns + k],
+				_mm256_store_ps(&c._matrix[i * b.columns + k],
 					_mm256_fmadd_ps(
-						_mm256_load_ps(&a.matrix[i * a.columns + k]),
-						_mm256_load_ps(&b.matrix[j * b.columns + k]),
-						_mm256_load_ps(&c.matrix[i * b.columns + k])
+						_mm256_load_ps(&a._matrix[i * a.columns + k]),
+						_mm256_load_ps(&b._matrix[j * b.columns + k]),
+						_mm256_load_ps(&c._matrix[i * b.columns + k])
 						));
 			}
 
 			for (; k < b.columns; k++) {
-				c.matrix[i * b.columns + k] += a.matrix[i * a.columns + k] * b.matrix[j * b.columns + k];
+				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + k] * b._matrix[j * b.columns + k];
 			}
 		}
 	}
@@ -201,7 +208,7 @@ matrix simd_dot_prod(const matrix& a, const matrix& b) {
 }
 matrix parallel_simd_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
-	c.matrix = std::vector<float>(a.rows * b.columns, 0);
+	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
 	#pragma omp parallel for
 	for (int i = 0; i < a.rows; i++) {
@@ -209,16 +216,16 @@ matrix parallel_simd_dot_prod(const matrix& a, const matrix& b) {
 
 			int k = 0;
 			for (; k + 8 <= b.columns; k += 8) {
-				_mm256_store_ps(&c.matrix[i * b.columns + k],
+				_mm256_store_ps(&c._matrix[i * b.columns + k],
 					_mm256_fmadd_ps(
-						_mm256_load_ps(&a.matrix[i * a.columns + k]),
-						_mm256_load_ps(&b.matrix[j * b.columns + k]),
-						_mm256_load_ps(&c.matrix[i * b.columns + k])
+						_mm256_load_ps(&a._matrix[i * a.columns + k]),
+						_mm256_load_ps(&b._matrix[j * b.columns + k]),
+						_mm256_load_ps(&c._matrix[i * b.columns + k])
 					));
 			}
 
 			for (; k < b.columns; k++) {
-				c.matrix[i * b.columns + k] += a.matrix[i * a.columns + k] * b.matrix[j * b.columns + k];
+				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + k] * b._matrix[j * b.columns + k];
 			}
 		}
 	}
@@ -227,31 +234,31 @@ matrix parallel_simd_dot_prod(const matrix& a, const matrix& b) {
 }
 matrix simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
-	c.matrix = std::vector<float>(a.rows * b.columns, 0);
+	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
 	for (size_t i = 0; i < a.rows; i++) {
 		for (size_t j = 0; j < b.rows; j++) {
 
 			size_t k = 0;
 			for (; k + 16 <= b.columns; k += 8) {
-				_mm256_store_ps(&c.matrix[i * b.columns + k],
+				_mm256_store_ps(&c._matrix[i * b.columns + k],
 					_mm256_fmadd_ps(
-						_mm256_load_ps(&a.matrix[i * a.columns + k]),
-						_mm256_load_ps(&b.matrix[j * b.columns + k]),
-						_mm256_load_ps(&c.matrix[i * b.columns + k])
+						_mm256_load_ps(&a._matrix[i * a.columns + k]),
+						_mm256_load_ps(&b._matrix[j * b.columns + k]),
+						_mm256_load_ps(&c._matrix[i * b.columns + k])
 					));
 
 				k += 8;
-				_mm256_store_ps(&c.matrix[i * b.columns + k],
+				_mm256_store_ps(&c._matrix[i * b.columns + k],
 					_mm256_fmadd_ps(
-						_mm256_load_ps(&a.matrix[i * a.columns + k]),
-						_mm256_load_ps(&b.matrix[j * b.columns + k]),
-						_mm256_load_ps(&c.matrix[i * b.columns + k])
+						_mm256_load_ps(&a._matrix[i * a.columns + k]),
+						_mm256_load_ps(&b._matrix[j * b.columns + k]),
+						_mm256_load_ps(&c._matrix[i * b.columns + k])
 					));
 			}
 
 			for (; k < b.columns; k++) {
-				c.matrix[i * b.columns + k] += a.matrix[i * a.columns + k] * b.matrix[j * b.columns + k];
+				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + k] * b._matrix[j * b.columns + k];
 			}
 		}
 	}
@@ -260,7 +267,7 @@ matrix simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b) {
 }
 matrix parallel_simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
-	c.matrix = std::vector<float>(a.rows * b.columns, 0);
+	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
 	#pragma omp parallel for
 	for (int i = 0; i < a.rows; i++) {
@@ -268,24 +275,24 @@ matrix parallel_simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b) {
 
 			int k = 0;
 			for (; k + 16 <= b.columns; k += 8) {
-				_mm256_store_ps(&c.matrix[i * b.columns + k],
+				_mm256_store_ps(&c._matrix[i * b.columns + k],
 					_mm256_fmadd_ps(
-						_mm256_load_ps(&a.matrix[i * a.columns + k]),
-						_mm256_load_ps(&b.matrix[j * b.columns + k]),
-						_mm256_load_ps(&c.matrix[i * b.columns + k])
+						_mm256_load_ps(&a._matrix[i * a.columns + k]),
+						_mm256_load_ps(&b._matrix[j * b.columns + k]),
+						_mm256_load_ps(&c._matrix[i * b.columns + k])
 					));
 
 				k += 8;
-				_mm256_store_ps(&c.matrix[i * b.columns + k],
+				_mm256_store_ps(&c._matrix[i * b.columns + k],
 					_mm256_fmadd_ps(
-						_mm256_load_ps(&a.matrix[i * a.columns + k]),
-						_mm256_load_ps(&b.matrix[j * b.columns + k]),
-						_mm256_load_ps(&c.matrix[i * b.columns + k])
+						_mm256_load_ps(&a._matrix[i * a.columns + k]),
+						_mm256_load_ps(&b._matrix[j * b.columns + k]),
+						_mm256_load_ps(&c._matrix[i * b.columns + k])
 					));
 			}
 
 			for (; k < b.columns; k++) {
-				c.matrix[i * b.columns + k] += a.matrix[i * a.columns + k] * b.matrix[j * b.columns + k];
+				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + k] * b._matrix[j * b.columns + k];
 			}
 		}
 	}
@@ -295,7 +302,7 @@ matrix parallel_simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b) {
 
 matrix blocked_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
-	c.matrix = std::vector<float>(a.rows * b.columns, 0);
+	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
 	for (size_t i = 0; i < a.rows; i += BLOCK_SIZE) {
 		for (size_t j = 0; j < b.rows; j += BLOCK_SIZE) {
@@ -303,7 +310,7 @@ matrix blocked_dot_prod(const matrix& a, const matrix& b) {
 				for (size_t l = i; l < i + BLOCK_SIZE && l < a.rows; l++) {
 					for (size_t m = j; m < j + BLOCK_SIZE && m < b.rows; m++) {
 						for (size_t n = k; n < k + BLOCK_SIZE && n < b.columns; n++) {
-							c.matrix[l * b.columns + n] += a.matrix[l * a.columns + n] * b.matrix[m * b.columns + n];
+							c._matrix[l * b.columns + n] += a._matrix[l * a.columns + n] * b._matrix[m * b.columns + n];
 						}
 					}
 				}
@@ -315,7 +322,7 @@ matrix blocked_dot_prod(const matrix& a, const matrix& b) {
 }
 matrix parallel_blocked_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
-	c.matrix = std::vector<float>(a.rows * b.columns, 0);
+	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
 	#pragma omp parallel for
 	for (int i = 0; i < a.rows; i += BLOCK_SIZE) {
@@ -324,7 +331,7 @@ matrix parallel_blocked_dot_prod(const matrix& a, const matrix& b) {
 				for (int l = i; l < i + BLOCK_SIZE && l < a.rows; l++) {
 					for (int m = j; m < j + BLOCK_SIZE && m < b.rows; m++) {
 						for (int n = k; n < k + BLOCK_SIZE && n < b.columns; n++) {
-							c.matrix[l * b.columns + n] += a.matrix[l * a.columns + n] * b.matrix[m * b.columns + n];
+							c._matrix[l * b.columns + n] += a._matrix[l * a.columns + n] * b._matrix[m * b.columns + n];
 						}
 					}
 				}
@@ -336,7 +343,7 @@ matrix parallel_blocked_dot_prod(const matrix& a, const matrix& b) {
 }
 matrix blocked_simd_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
-	c.matrix = std::vector<float>(a.rows * b.columns, 0);
+	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
 	for (size_t i = 0; i < a.rows; i += BLOCK_SIZE) {
 		for (size_t j = 0; j < b.rows; j += BLOCK_SIZE) {
@@ -347,16 +354,16 @@ matrix blocked_simd_dot_prod(const matrix& a, const matrix& b) {
 
 						size_t n = k;
 						for (; n + 8 <= k + BLOCK_SIZE && n + 8 <= b.columns; n += 8) {
-							_mm256_store_ps(&c.matrix[l * b.columns + n],
+							_mm256_store_ps(&c._matrix[l * b.columns + n],
 								_mm256_fmadd_ps(
-									_mm256_load_ps(&a.matrix[l * a.columns + n]),
-									_mm256_load_ps(&b.matrix[m * b.columns + n]),
-									_mm256_load_ps(&c.matrix[l * b.columns + n])
+									_mm256_load_ps(&a._matrix[l * a.columns + n]),
+									_mm256_load_ps(&b._matrix[m * b.columns + n]),
+									_mm256_load_ps(&c._matrix[l * b.columns + n])
 								));
 						}
 
 						for (; n < k + BLOCK_SIZE && n < b.columns; n++) {
-							c.matrix[l * b.columns + n] += a.matrix[l * a.columns + n] * b.matrix[m * b.columns + n];
+							c._matrix[l * b.columns + n] += a._matrix[l * a.columns + n] * b._matrix[m * b.columns + n];
 						}
 					}
 				}
@@ -368,7 +375,7 @@ matrix blocked_simd_dot_prod(const matrix& a, const matrix& b) {
 }
 matrix parallel_blocked_simd_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
-	c.matrix = std::vector<float>(a.rows * b.columns, 0);
+	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
 	#pragma omp parallel for
 	for (int i = 0; i < a.rows; i += BLOCK_SIZE) {
@@ -380,16 +387,16 @@ matrix parallel_blocked_simd_dot_prod(const matrix& a, const matrix& b) {
 
 						int n = k;
 						for (; n + 8 <= k + BLOCK_SIZE && n + 8 <= b.columns; n += 8) {
-							_mm256_store_ps(&c.matrix[l * b.columns + n],
+							_mm256_store_ps(&c._matrix[l * b.columns + n],
 								_mm256_fmadd_ps(
-									_mm256_load_ps(&a.matrix[l * a.columns + n]),
-									_mm256_load_ps(&b.matrix[m * b.columns + n]),
-									_mm256_load_ps(&c.matrix[l * b.columns + n])
+									_mm256_load_ps(&a._matrix[l * a.columns + n]),
+									_mm256_load_ps(&b._matrix[m * b.columns + n]),
+									_mm256_load_ps(&c._matrix[l * b.columns + n])
 								));
 						}
 
 						for (; n < k + BLOCK_SIZE && n < b.columns; n++) {
-							c.matrix[l * b.columns + n] += a.matrix[l * a.columns + n] * b.matrix[m * b.columns + n];
+							c._matrix[l * b.columns + n] += a._matrix[l * a.columns + n] * b._matrix[m * b.columns + n];
 						}
 					}
 				}
@@ -401,7 +408,7 @@ matrix parallel_blocked_simd_dot_prod(const matrix& a, const matrix& b) {
 }
 matrix blocked_simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
-	c.matrix = std::vector<float>(a.rows * b.columns, 0);
+	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
 	for (size_t i = 0; i < a.rows; i += BLOCK_SIZE) {
 		for (size_t j = 0; j < b.rows; j += BLOCK_SIZE) {
@@ -413,24 +420,24 @@ matrix blocked_simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b) {
 						size_t n = k;
 						for (; n + 16 <= k + BLOCK_SIZE && n + 16 <= b.columns; n += 8) {
 
-							_mm256_store_ps(&c.matrix[l * b.columns + n],
+							_mm256_store_ps(&c._matrix[l * b.columns + n],
 								_mm256_fmadd_ps(
-									_mm256_load_ps(&a.matrix[l * a.columns + n]),
-									_mm256_load_ps(&b.matrix[m * b.columns + n]),
-									_mm256_load_ps(&c.matrix[l * b.columns + n])
+									_mm256_load_ps(&a._matrix[l * a.columns + n]),
+									_mm256_load_ps(&b._matrix[m * b.columns + n]),
+									_mm256_load_ps(&c._matrix[l * b.columns + n])
 								));
 
 							n += 8;
-							_mm256_store_ps(&c.matrix[l * b.columns + n],
+							_mm256_store_ps(&c._matrix[l * b.columns + n],
 								_mm256_fmadd_ps(
-									_mm256_load_ps(&a.matrix[l * a.columns + n]),
-									_mm256_load_ps(&b.matrix[m * b.columns + n]),
-									_mm256_load_ps(&c.matrix[l * b.columns + n])
+									_mm256_load_ps(&a._matrix[l * a.columns + n]),
+									_mm256_load_ps(&b._matrix[m * b.columns + n]),
+									_mm256_load_ps(&c._matrix[l * b.columns + n])
 								));
 						}
 
 						for (; n < k + BLOCK_SIZE && n < b.columns; n++) {
-							c.matrix[l * b.columns + n] += a.matrix[l * a.columns + n] * b.matrix[m * b.columns + n];
+							c._matrix[l * b.columns + n] += a._matrix[l * a.columns + n] * b._matrix[m * b.columns + n];
 						}
 					}
 				}
@@ -442,7 +449,7 @@ matrix blocked_simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b) {
 }
 matrix parallel_blocked_simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
-	c.matrix = std::vector<float>(a.rows * b.columns, 0);
+	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
 	#pragma omp parallel for
 	for (int i = 0; i < a.rows; i += BLOCK_SIZE) {
@@ -455,24 +462,24 @@ matrix parallel_blocked_simd_ma_unrolled_dot_prod(const matrix& a, const matrix&
 						int n = k;
 						for (; n + 16 <= k + BLOCK_SIZE && n + 16 <= b.columns; n += 8) {
 
-							_mm256_store_ps(&c.matrix[l * b.columns + n],
+							_mm256_store_ps(&c._matrix[l * b.columns + n],
 								_mm256_fmadd_ps(
-									_mm256_load_ps(&a.matrix[l * a.columns + n]),
-									_mm256_load_ps(&b.matrix[m * b.columns + n]),
-									_mm256_load_ps(&c.matrix[l * b.columns + n])
+									_mm256_load_ps(&a._matrix[l * a.columns + n]),
+									_mm256_load_ps(&b._matrix[m * b.columns + n]),
+									_mm256_load_ps(&c._matrix[l * b.columns + n])
 								));
 
 							n += 8;
-							_mm256_store_ps(&c.matrix[l * b.columns + n],
+							_mm256_store_ps(&c._matrix[l * b.columns + n],
 								_mm256_fmadd_ps(
-									_mm256_load_ps(&a.matrix[l * a.columns + n]),
-									_mm256_load_ps(&b.matrix[m * b.columns + n]),
-									_mm256_load_ps(&c.matrix[l * b.columns + n])
+									_mm256_load_ps(&a._matrix[l * a.columns + n]),
+									_mm256_load_ps(&b._matrix[m * b.columns + n]),
+									_mm256_load_ps(&c._matrix[l * b.columns + n])
 								));
 						}
 
 						for (; n < k + BLOCK_SIZE && n < b.columns; n++) {
-							c.matrix[l * b.columns + n] += a.matrix[l * a.columns + n] * b.matrix[m * b.columns + n];
+							c._matrix[l * b.columns + n] += a._matrix[l * a.columns + n] * b._matrix[m * b.columns + n];
 						}
 					}
 				}
@@ -485,7 +492,7 @@ matrix parallel_blocked_simd_ma_unrolled_dot_prod(const matrix& a, const matrix&
 
 matrix strassens_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
-	c.matrix = std::vector<float>(a.rows * b.columns, 0);
+	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
 	/*
 	* M1 = (A11 + A22) * (B11 + B22);

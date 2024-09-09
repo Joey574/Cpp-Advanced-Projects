@@ -8,10 +8,10 @@
 #include <Windows.h>
 
 #define BLOCK_SIZE 64
-
-alignas(64) float local_a[BLOCK_SIZE * BLOCK_SIZE];
-alignas(64) float local_b[BLOCK_SIZE * BLOCK_SIZE];
-alignas(64) float local_c[BLOCK_SIZE * BLOCK_SIZE];
+alignas(64) float LOCAL_A[BLOCK_SIZE * BLOCK_SIZE];
+alignas(64) float LOCAL_B[BLOCK_SIZE * BLOCK_SIZE];
+alignas(64) float LOCAL_C[BLOCK_SIZE * BLOCK_SIZE];
+#pragma omp threadprivate(LOCAL_A, LOCAL_B, LOCAL_C)
 
 #define RED_TEXT 4
 #define GREEN_TEXT 10
@@ -43,6 +43,8 @@ matrix parallel_simd_dot_prod(const matrix& a, const matrix& b);
 matrix simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b);
 matrix parallel_simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b);
 
+matrix parallel_omp_simd_dot_prod(const matrix& a, const matrix& b);
+
 matrix blocked_dot_prod(const matrix& a, const matrix& b);
 matrix parallel_blocked_dot_prod(const matrix& a, const matrix& b);
 matrix blocked_simd_dot_prod(const matrix& a, const matrix& b);
@@ -50,25 +52,50 @@ matrix parallel_blocked_simd_dot_prod(const matrix& a, const matrix& b);
 matrix blocked_simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b);
 matrix parallel_blocked_simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b);
 
+matrix parallel_simd_localbuffer_dot_prod(const matrix& a, const matrix& b);
+matrix parallel_simd_localbuffer_blocked_dot_prod(const matrix& a, const matrix& b);
+
+void simple_test(matrix(*dot)(const matrix&, const matrix&)) {
+	matrix a; a.rows = 10; a.columns = 10;
+	matrix b; b.rows = 10; b.columns = 10;
+
+	a._matrix = std::vector<float>(a.rows * a.columns);
+	b._matrix = std::vector<float>(b.rows * b.columns);
+
+	for (int r = 0; r < a.rows; r++) {
+		for (int c = 0; c < a.columns; c++) {
+			a._matrix[r * a.columns + c] = r;
+			b._matrix[r * b.columns + c] = r;
+		}
+	}
+
+	std::cout << matrix_to_string(dot(a, b));
+}
+
 int main()
 {
 	SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS);
 
-	run_test("bad_dot_prod", bad_dot_prod);
-	run_test("base_dot_prod", base_dot_prod);
-	run_test("parallel_dot_prod", parallel_dot_prod);
+	//run_test("bad_dot_prod", bad_dot_prod);
+	//run_test("base_dot_prod", base_dot_prod);
+	//run_test("parallel_dot_prod", parallel_dot_prod);
 
-	run_test("simd_dot_prod", simd_dot_prod);
+	//run_test("simd_dot_prod", simd_dot_prod);
 	run_test("parallel_simd_dot_prod", parallel_simd_dot_prod);
-	run_test("simd_ma_unrolled_dot_prod", simd_ma_unrolled_dot_prod);
+	//run_test("simd_ma_unrolled_dot_prod", simd_ma_unrolled_dot_prod);
 	run_test("parallel_simd_ma_unrolled_dot_prod", parallel_simd_ma_unrolled_dot_prod);
 
-	run_test("blocked_dot_prod", blocked_dot_prod);
-	run_test("parallel_blocked_dot_prod", parallel_blocked_dot_prod);
-	run_test("blocked_simd_dot_prod", blocked_simd_dot_prod);
-	run_test("parallel_blocked_simd_dot_prod", parallel_blocked_simd_dot_prod);
-	run_test("blocked_simd_ma_unrolled_dot_prod", blocked_simd_ma_unrolled_dot_prod);
-	run_test("parallel_blocked_simd_ma_unrolled_dot_prod", parallel_blocked_simd_ma_unrolled_dot_prod);
+	//run_test("parallel_omp_simd_dot_prod", parallel_omp_simd_dot_prod);
+
+	//run_test("blocked_dot_prod", blocked_dot_prod);
+	//run_test("parallel_blocked_dot_prod", parallel_blocked_dot_prod);
+	//run_test("blocked_simd_dot_prod", blocked_simd_dot_prod);
+	//run_test("parallel_blocked_simd_dot_prod", parallel_blocked_simd_dot_prod);
+	//run_test("blocked_simd_ma_unrolled_dot_prod", blocked_simd_ma_unrolled_dot_prod);
+	//run_test("parallel_blocked_simd_ma_unrolled_dot_prod", parallel_blocked_simd_ma_unrolled_dot_prod);
+
+	run_test("parallel_simd_localbuffer_dot_prod", parallel_simd_localbuffer_dot_prod);
+	run_test("parallel_simd_localbuffer_blocked_dot_prod", parallel_simd_localbuffer_blocked_dot_prod);
 
 	return 0;
 }
@@ -300,6 +327,24 @@ matrix parallel_simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b) {
 	return c;
 }
 
+matrix parallel_omp_simd_dot_prod(const matrix& a, const matrix& b) {
+	matrix c; c.rows = a.rows; c.columns = b.columns;
+	c._matrix = std::vector<float>(a.rows * b.columns, 0);
+
+	#pragma omp parallel for
+	for (int i = 0; i < a.rows; i++) {
+		for (size_t j = 0; j < b.rows; j++) {
+
+			#pragma omp simd
+			for (size_t k = 0; k < b.columns; k++) {
+				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + k] * b._matrix[j * b.columns + k];
+			}
+		}
+	}
+
+	return c;
+}
+
 matrix blocked_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
 	c._matrix = std::vector<float>(a.rows * b.columns, 0);
@@ -481,6 +526,94 @@ matrix parallel_blocked_simd_ma_unrolled_dot_prod(const matrix& a, const matrix&
 						for (; n < k + BLOCK_SIZE && n < b.columns; n++) {
 							c._matrix[l * b.columns + n] += a._matrix[l * a.columns + n] * b._matrix[m * b.columns + n];
 						}
+					}
+				}
+			}
+		}
+	}
+
+	return c;
+}
+
+matrix parallel_simd_localbuffer_dot_prod(const matrix& a, const matrix& b) {
+	matrix c; c.rows = a.rows; c.columns = b.columns;
+	c._matrix = std::vector<float>(a.rows * b.columns, 0);
+
+	alignas(64) std::vector<float> local_a(a.rows * a.columns);
+	alignas(64) std::vector<float> local_b(b.rows * b.columns);
+	alignas(64) std::vector<float> local_c(c.rows * c.columns, 0);
+
+	std::copy(a._matrix.begin(), a._matrix.end(), local_a.begin());
+	std::copy(b._matrix.begin(), b._matrix.end(), local_b.begin());
+
+	#pragma omp parallel for
+	for (int i = 0; i < a.rows; i++) {
+		for (int j = 0; j < b.rows; j++) {
+
+			int k = 0;
+			for (; k + 8 <= b.columns; k += 8) {
+				_mm256_store_ps(&local_c[i * b.columns + k],
+					_mm256_fmadd_ps(
+						_mm256_load_ps(&local_a[i * a.columns + k]),
+						_mm256_load_ps(&local_b[j * b.columns + k]),
+						_mm256_load_ps(&local_c[i * b.columns + k])
+				));
+			}
+
+			for (; k < b.columns; k++) {
+				local_c[i * b.columns + k] += local_a[i * a.columns + k] * local_b[j * b.columns + k];
+			}
+		}
+	}
+
+	std::copy(local_c.begin(), local_c.end(), c._matrix.begin());
+
+	return c;
+}
+matrix parallel_simd_localbuffer_blocked_dot_prod(const matrix& a, const matrix& b) {
+	matrix c; c.rows = a.rows; c.columns = b.columns;
+	c._matrix = std::vector<float>(a.rows * b.columns, 0);
+
+	#pragma omp parallel for
+	for (int i = 0; i < a.rows; i += BLOCK_SIZE) {
+		for (int j = 0; j < b.rows; j += BLOCK_SIZE) {
+			for (int k = 0; k < b.columns; k += BLOCK_SIZE) {
+
+				for (int a_r = 0; a_r < BLOCK_SIZE; a_r++) {
+					#pragma omp simd
+					for (int a_c = 0; a_c < BLOCK_SIZE; a_c++) {
+						LOCAL_A[a_r * BLOCK_SIZE + a_c] = a_r + i >= a.rows || a_c + j >= a.columns ? 0.0f : a._matrix[(a_r + i) * a.columns + (a_c + j)];
+					}
+				}
+
+				for (int b_r = 0; b_r < BLOCK_SIZE; b_r++) {
+					#pragma omp simd
+					for (int b_c = 0; b_c < BLOCK_SIZE; b_c++) {
+						LOCAL_B[b_r * BLOCK_SIZE + b_c] = b_r + j >= b.rows || b_c + k >= b.columns ? 0.0f : b._matrix[(b_r + j) * b.columns + (b_c + k)];
+					}
+				}
+				std::fill(&LOCAL_C[0], &LOCAL_C[BLOCK_SIZE * BLOCK_SIZE], 0);
+
+
+				for (int l = 0; l < BLOCK_SIZE; l++) {
+					for (int m = 0; m < BLOCK_SIZE; m++) {
+
+						int n = 0;
+						for (; n + 8 <= BLOCK_SIZE; n += 8) {
+							_mm256_store_ps(&LOCAL_C[l * BLOCK_SIZE + n],
+								_mm256_fmadd_ps(
+									_mm256_load_ps(&LOCAL_A[l * BLOCK_SIZE + n]),
+									_mm256_load_ps(&LOCAL_B[m * BLOCK_SIZE + n]),
+									_mm256_load_ps(&LOCAL_C[l * BLOCK_SIZE + n])
+								));
+						}
+					}
+				}
+
+				// copy into c_matrix
+				for (int c_r = 0; c_r < BLOCK_SIZE && c_r + i < c.rows; c_r++) {
+					for (int c_c = 0; c_c < BLOCK_SIZE && c_c + k < c.columns; c_c++) {
+						c._matrix[(c_r + i) * c.columns + (c_c + k)] = LOCAL_C[c_r * BLOCK_SIZE + c_c];
 					}
 				}
 			}

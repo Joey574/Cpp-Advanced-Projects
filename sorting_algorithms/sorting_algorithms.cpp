@@ -2,9 +2,16 @@
 #include <iostream>
 #include <string>
 #include <chrono>
+#include <Windows.h>
 
+#define RED_TEXT 4
+#define GREEN_TEXT 10
+#define WHITE_TEXT 7
+#define BLUE_TEXT 1
+#define YELLOW_TEXT 6
+#define PURPLE_TEXT 13
 
-void run_test(std::vector<int>(*sorter)(std::vector<int>), std::string name, std::vector<int> unsorted);
+void run_test(std::vector<int>(*sorter)(std::vector<int>), std::string name);
 std::vector<int> selecition_sort(std::vector<int> unsorted);
 std::vector<int> insertion_sort(std::vector<int> unsorted);
 std::vector<int> bubble_sort(std::vector<int> unsorted);
@@ -17,42 +24,70 @@ std::vector<int> bogo_seed_find(std::vector<int> unsorted);
 
 int main()
 {
-    std::vector<int> to_sort(100);
+    run_test(selecition_sort, "selection sort");
+    run_test(insertion_sort, "insertion sort");
+    run_test(bubble_sort, "bubble sort");
+    run_test(merge_sort, "merge sort");
+    //run_test(comb_sort, "comb sort"); -> needs to be fixed
+    //run_test(tim_sort, "tim sort"); -> needs to be made
 
-    // init values to 0->size - 1
-    for (int i = 0; i < to_sort.size(); i++) {
-        to_sort[i] = i;
-    }
-
-    // shuffle
-    for (int k = 0; k < to_sort.size(); k++) {
-        int r = k + rand() % (to_sort.size() - k);
-
-        int t = to_sort[k];
-        to_sort[k] = to_sort[r];
-        to_sort[r] = t;
-    }
-
-    run_test(selecition_sort, "selection sort", to_sort);
-    run_test(insertion_sort, "insertion sort", to_sort);
-    run_test(bubble_sort, "bubble sort", to_sort);
-    run_test(merge_sort, "merge sort", to_sort);
-    run_test(comb_sort, "comb sort", to_sort);
-    //run_test(tim_sort, "tim sort", to_sort);
-
-    //run_test(bogo_sort, "bogo sort", to_sort);
-    //run_test(bogo_seed_find, "seed find: ", to_sort);
+    //run_test(bogo_sort, "bogo sort");
+    //run_test(bogo_seed_find, "seed find: ");
 }
 
-void run_test(std::vector<int>(*sorter)(std::vector<int>), std::string name, std::vector<int> unsorted) {
+void run_test(std::vector<int>(*sorter)(std::vector<int>), std::string name) {
 
-    std::chrono::duration<double, std::milli> time;
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    auto start = std::chrono::high_resolution_clock::now();
-    std::vector<int> sorted = sorter(unsorted);
-    time = std::chrono::high_resolution_clock::now() - start;
+    const int max_size = 8192;
+    const int multiplier = 2;
+    const int runs = 10;
 
-    std::cout << name << ": " << time.count() << " ms\n";
+    SetConsoleTextAttribute(hConsole, YELLOW_TEXT); std::cout << name << ":\n";
+
+    for (int size = 1024; size <= max_size; size *= multiplier) {
+        std::vector<int> to_sort(size);
+
+        // init values to 0->size - 1
+        for (int i = 0; i < to_sort.size(); i++) {
+            to_sort[i] = i;
+        }
+
+        // shuffle
+        for (int k = 0; k < to_sort.size(); k++) {
+            int r = k + rand() % (to_sort.size() - k);
+
+            int t = to_sort[k];
+            to_sort[k] = to_sort[r];
+            to_sort[r] = t;
+        }
+
+        double best[runs];
+
+        for (int r = 0; r < runs; r++) {
+            auto start = std::chrono::high_resolution_clock::now();
+            std::vector<int> sorted = sorter(to_sort);
+            best[r] = (std::chrono::high_resolution_clock::now() - start).count();
+
+            for (int i = 0; i < sorted.size(); i++) {
+                if (sorted[i] != i) {
+                    std::cout << name << " failed\n";
+                    break;
+                }
+            }
+
+        }
+        
+        double min = *std::min_element(&best[0], &best[runs]);
+        double max = *std::max_element(&best[0], &best[runs]);
+
+        SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << "\t" << size << ": ";
+        SetConsoleTextAttribute(hConsole, GREEN_TEXT); std::cout << (min / 1000000.00) << "ms";
+        SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << " - ";
+        SetConsoleTextAttribute(hConsole, RED_TEXT); std::cout << (max / 1000000.00) << "ms\n";
+
+        SetConsoleTextAttribute(hConsole, WHITE_TEXT);
+    }
 }
 
 std::vector<int> selecition_sort(std::vector<int> unsorted) {

@@ -13,6 +13,13 @@ alignas(64) float LOCAL_B[BLOCK_SIZE * BLOCK_SIZE];
 alignas(64) float LOCAL_C[BLOCK_SIZE * BLOCK_SIZE];
 #pragma omp threadprivate(LOCAL_A, LOCAL_B, LOCAL_C)
 
+#define LINE_SIZE 128
+alignas(64) float LINE_A[LINE_SIZE];
+alignas(64) float LINE_B[LINE_SIZE];
+alignas(64) float LINE_C[LINE_SIZE];
+#pragma omp threadprivate(LINE_A, LINE_B, LINE_C)
+
+
 #define RED_TEXT 4
 #define GREEN_TEXT 10
 #define WHITE_TEXT 7
@@ -83,9 +90,9 @@ int main()
 	//run_test("simd_dot_prod", simd_dot_prod);
 	run_test("parallel_simd_dot_prod", parallel_simd_dot_prod);
 	//run_test("simd_ma_unrolled_dot_prod", simd_ma_unrolled_dot_prod);
-	run_test("parallel_simd_ma_unrolled_dot_prod", parallel_simd_ma_unrolled_dot_prod);
+	//run_test("parallel_simd_ma_unrolled_dot_prod", parallel_simd_ma_unrolled_dot_prod);
 
-	//run_test("parallel_omp_simd_dot_prod", parallel_omp_simd_dot_prod);
+	run_test("parallel_omp_simd_dot_prod", parallel_omp_simd_dot_prod);
 
 	//run_test("blocked_dot_prod", blocked_dot_prod);
 	//run_test("parallel_blocked_dot_prod", parallel_blocked_dot_prod);
@@ -94,8 +101,8 @@ int main()
 	//run_test("blocked_simd_ma_unrolled_dot_prod", blocked_simd_ma_unrolled_dot_prod);
 	//run_test("parallel_blocked_simd_ma_unrolled_dot_prod", parallel_blocked_simd_ma_unrolled_dot_prod);
 
-	run_test("parallel_simd_localbuffer_dot_prod", parallel_simd_localbuffer_dot_prod);
-	run_test("parallel_simd_localbuffer_blocked_dot_prod", parallel_simd_localbuffer_blocked_dot_prod);
+	//run_test("parallel_simd_localbuffer_dot_prod", parallel_simd_localbuffer_dot_prod);
+	//run_test("parallel_simd_localbuffer_blocked_dot_prod", parallel_simd_localbuffer_blocked_dot_prod);
 
 	return 0;
 }
@@ -331,12 +338,14 @@ matrix parallel_omp_simd_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
 	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
-	#pragma omp parallel for
+	#pragma omp parallel for 
 	for (int i = 0; i < a.rows; i++) {
-		for (size_t j = 0; j < b.rows; j++) {
+		for (int j = 0; j < b.rows; j++) {
 
-			#pragma omp simd
-			for (size_t k = 0; k < b.columns; k++) {
+			//float partial = 0.0f;
+			#pragma omp simd reduction(+:c)
+			for (int k = 0; k < b.columns; k++) {
+				//partial += a._matrix[i * a.columns + k] * b._matrix[j * b.columns + k];
 				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + k] * b._matrix[j * b.columns + k];
 			}
 		}

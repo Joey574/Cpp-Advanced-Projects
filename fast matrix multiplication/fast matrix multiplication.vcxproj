@@ -123,11 +123,10 @@
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
-      <OpenMPSupport>true</OpenMPSupport>
       <StringPooling>true</StringPooling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <IntelJCCErratum>true</IntelJCCErratum>
-      <AdditionalOptions>-openmp:experimental /Qvec-report:2 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-openmp:experimental</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

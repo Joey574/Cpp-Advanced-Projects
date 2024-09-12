@@ -4,6 +4,8 @@
 #include <chrono>
 #include <Windows.h>
 #include <random>
+#include <immintrin.h>
+#include <omp.h>
 
 #define RED_TEXT 4
 #define GREEN_TEXT 10
@@ -28,8 +30,9 @@ void basic_transpose(const matrix& mat, matrix& mat_t);
 void parallel_flipped_transpose(const matrix& mat, matrix& mat_t);
 void parallel_transpose(const matrix& mat, matrix& mat_t);
 
-void parallel_omp_simd_transpose(const matrix& mat, matrix& mat_t);
+void parallel_flipped_unrolled_transpose(const matrix& mat, matrix& mat_t);
 
+void parallel_flipped_simd_transpose(const matrix& mat, matrix& mat_t);
 
 
 void random_init(matrix& a) {
@@ -44,17 +47,18 @@ void random_init(matrix& a) {
     }
 }
 
+
 int main()
 {
-
-
-    run_test("flipped_transpose", flipped_transpose);
+    //run_test("flipped_transpose", flipped_transpose);
     run_test("basic_transpose", basic_transpose);
 
     run_test("parallel_flipped_transpose", parallel_flipped_transpose);
-    run_test("parallel_transpose", parallel_transpose);
+    //run_test("parallel_transpose", parallel_transpose);
 
-    run_test("parallel_omp_simd_transpose", parallel_omp_simd_transpose);
+    run_test("parallel_flipped_unrolled_transpose", parallel_flipped_unrolled_transpose);
+
+    run_test("parallel_flipped_simd_transpose", parallel_flipped_simd_transpose);
 }
 
 void run_test(std::string name, void(*transpose)(const matrix&, matrix&)) {
@@ -77,10 +81,20 @@ void run_test(std::string name, void(*transpose)(const matrix&, matrix&)) {
         matrix mat_t; mat_t.rows = mat.columns; mat_t.columns = mat.rows;
         mat_t._matrix = std::vector<float>(mat_t.rows * mat_t.columns);
 
+        bool f = false;
         for (int r = 0; r < runs; r++) {
             auto start = std::chrono::high_resolution_clock::now();
             transpose(mat, mat_t);
             best[r] = (std::chrono::high_resolution_clock::now() - start).count();
+
+            for (int i = 0; i < mat.rows && !f; i++) {
+                for (int c = 0; c < mat.columns && !f; c++) {
+                    if (mat._matrix[i * mat.columns + c] != mat_t._matrix[c * mat_t.columns + i]) {
+                        std::cout << name << ": failed\n";
+                        f = true;
+                    }
+                }
+            }
         }
 
         double min = *std::min_element(&best[0], &best[runs]);
@@ -125,6 +139,54 @@ void parallel_transpose(const matrix& mat, matrix& mat_t) {
     #pragma omp parallel for
     for (int r = 0; r < mat.rows; r++) {
         for (int c = 0; c < mat.columns; c++) {
+            mat_t._matrix[c * mat_t.columns + r] = mat._matrix[r * mat.columns + c];
+        }
+    }
+}
+
+void parallel_flipped_unrolled_transpose(const matrix& mat, matrix& mat_t) {
+
+    #pragma omp parallel for
+    for (int c = 0; c < mat.columns; c++) {
+
+        int r = 0;
+        for (; r + 8 <= mat.rows; r += 8) {
+            mat_t._matrix[c * mat_t.columns + r] = mat._matrix[r * mat.columns + c];
+            mat_t._matrix[c * mat_t.columns + r + 1] = mat._matrix[(r + 1) * mat.columns + c];
+            mat_t._matrix[c * mat_t.columns + r + 2] = mat._matrix[(r + 2) * mat.columns + c];
+            mat_t._matrix[c * mat_t.columns + r + 3] = mat._matrix[(r + 3) * mat.columns + c];
+            mat_t._matrix[c * mat_t.columns + r + 4] = mat._matrix[(r + 4) * mat.columns + c];
+            mat_t._matrix[c * mat_t.columns + r + 5] = mat._matrix[(r + 5) * mat.columns + c];
+            mat_t._matrix[c * mat_t.columns + r + 6] = mat._matrix[(r + 6) * mat.columns + c];
+            mat_t._matrix[c * mat_t.columns + r + 7] = mat._matrix[(r + 7) * mat.columns + c];
+        }
+
+        for (; r < mat.rows; r++) {
+            mat_t._matrix[c * mat_t.columns + r] = mat._matrix[r * mat.columns + c];
+        }
+    }
+}
+
+void parallel_flipped_simd_transpose(const matrix& mat, matrix& mat_t) {
+
+    #pragma omp parallel for
+    for (int c = 0; c < mat.columns; c++) {
+
+        int r = 0;
+        for (; r + 8 <= mat.rows; r += 8) {
+            _mm256_store_ps(&mat_t._matrix[c * mat_t.columns + r], {
+                mat._matrix[r * mat.columns + c],
+                mat._matrix[(r + 1) * mat.columns + c],
+                mat._matrix[(r + 2) * mat.columns + c],
+                mat._matrix[(r + 3) * mat.columns + c],
+                mat._matrix[(r + 4) * mat.columns + c],
+                mat._matrix[(r + 5) * mat.columns + c],
+                mat._matrix[(r + 6) * mat.columns + c],
+                mat._matrix[(r + 7) * mat.columns + c]              
+            });
+        }
+
+        for (; r < mat.rows; r++) {
             mat_t._matrix[c * mat_t.columns + r] = mat._matrix[r * mat.columns + c];
         }
     }

@@ -7,8 +7,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "C++ Advanced Projects", "C+
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Levenshtein", "Levenshtein\Levenshtein.vcxproj", "{7263EF29-1139-475E-A39D-78E59F76B7C3}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Learning fucking threads again", "Learning fucking threads again\Learning fucking threads again.vcxproj", "{9FDCB757-A240-4F88-BB4B-3676E087D2CB}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Levenshtein Graphing", "Levenshtein Graphing\Levenshtein Graphing.vcxproj", "{4C07E733-9903-4477-8172-6E19F7613CBD}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Snake_Game", "Snake_Game\Snake_Game.vcxproj", "{F06ECD83-A2E7-4C17-AE19-C9B1A28D6359}"
@@ -24,6 +22,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fast matrix multiplication", "fast matrix multiplication\fast matrix multiplication.vcxproj", "{A9242146-4976-49CE-924D-8A09C1E4CB34}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fast_transpose", "fast_transpose\fast_transpose.vcxproj", "{05E28504-72C9-44D4-B413-715E0797119C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "learning_threads", "learning_threads\learning_threads.vcxproj", "{0DCC655A-2FCA-4AA1-BDDD-ED63F09903A8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,14 +49,6 @@ Global
 		{7263EF29-1139-475E-A39D-78E59F76B7C3}.Release|x64.Build.0 = Release|x64
 		{7263EF29-1139-475E-A39D-78E59F76B7C3}.Release|x86.ActiveCfg = Release|Win32
 		{7263EF29-1139-475E-A39D-78E59F76B7C3}.Release|x86.Build.0 = Release|Win32
-		{9FDCB757-A240-4F88-BB4B-3676E087D2CB}.Debug|x64.ActiveCfg = Debug|x64
-		{9FDCB757-A240-4F88-BB4B-3676E087D2CB}.Debug|x64.Build.0 = Debug|x64
-		{9FDCB757-A240-4F88-BB4B-3676E087D2CB}.Debug|x86.ActiveCfg = Debug|Win32
-		{9FDCB757-A240-4F88-BB4B-3676E087D2CB}.Debug|x86.Build.0 = Debug|Win32
-		{9FDCB757-A240-4F88-BB4B-3676E087D2CB}.Release|x64.ActiveCfg = Release|x64
-		{9FDCB757-A240-4F88-BB4B-3676E087D2CB}.Release|x64.Build.0 = Release|x64
-		{9FDCB757-A240-4F88-BB4B-3676E087D2CB}.Release|x86.ActiveCfg = Release|Win32
-		{9FDCB757-A240-4F88-BB4B-3676E087D2CB}.Release|x86.Build.0 = Release|Win32
 		{4C07E733-9903-4477-8172-6E19F7613CBD}.Debug|x64.ActiveCfg = Debug|x64
 		{4C07E733-9903-4477-8172-6E19F7613CBD}.Debug|x64.Build.0 = Debug|x64
 		{4C07E733-9903-4477-8172-6E19F7613CBD}.Debug|x86.ActiveCfg = Debug|Win32
@@ -121,6 +113,14 @@ Global
 		{05E28504-72C9-44D4-B413-715E0797119C}.Release|x64.Build.0 = Release|x64
 		{05E28504-72C9-44D4-B413-715E0797119C}.Release|x86.ActiveCfg = Release|Win32
 		{05E28504-72C9-44D4-B413-715E0797119C}.Release|x86.Build.0 = Release|Win32
+		{0DCC655A-2FCA-4AA1-BDDD-ED63F09903A8}.Debug|x64.ActiveCfg = Debug|x64
+		{0DCC655A-2FCA-4AA1-BDDD-ED63F09903A8}.Debug|x64.Build.0 = Debug|x64
+		{0DCC655A-2FCA-4AA1-BDDD-ED63F09903A8}.Debug|x86.ActiveCfg = Debug|Win32
+		{0DCC655A-2FCA-4AA1-BDDD-ED63F09903A8}.Debug|x86.Build.0 = Debug|Win32
+		{0DCC655A-2FCA-4AA1-BDDD-ED63F09903A8}.Release|x64.ActiveCfg = Release|x64
+		{0DCC655A-2FCA-4AA1-BDDD-ED63F09903A8}.Release|x64.Build.0 = Release|x64
+		{0DCC655A-2FCA-4AA1-BDDD-ED63F09903A8}.Release|x86.ActiveCfg = Release|Win32
+		{0DCC655A-2FCA-4AA1-BDDD-ED63F09903A8}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

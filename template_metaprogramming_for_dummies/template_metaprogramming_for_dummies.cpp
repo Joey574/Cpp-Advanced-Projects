@@ -38,14 +38,44 @@ struct funcCall<false> {
     }
 };
 
+
+
+template<float l1, float l2, float momentum>
+struct back_prop {
+    static float compute(float a, float b) {
+
+        if constexpr (momentum) {
+            b = b * momentum;
+        }
+
+        if constexpr (l1) {
+            a = a * l1;
+        }
+
+        if constexpr (l2) {
+            a = l2 - a;
+        }
+
+        return a - b;
+    }
+};
+
+
 int main()
 {
-    constexpr int num = 5;
+   /* constexpr int num = 5;
     constexpr int result = factorial<num>::value;
 
     std::cout << "factorial of " << num << " is " << result << std::endl;
 
     constexpr bool cond = true;
 
-    funcCall<cond>::Call();
+    funcCall<cond>::Call();*/
+
+    constexpr float l1 = 0.0f;
+    constexpr float l2 = 1.0f;
+    constexpr float momentum = 0.5f;
+
+    std::cout << back_prop<l1, l2, momentum>::compute(2, 3);
+
 }

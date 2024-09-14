@@ -88,22 +88,22 @@ int main()
 	//run_test("parallel_dot_prod", parallel_dot_prod);
 
 	//run_test("simd_dot_prod", simd_dot_prod);
-	run_test("parallel_simd_dot_prod", parallel_simd_dot_prod);
+	//run_test("parallel_simd_dot_prod", parallel_simd_dot_prod);
 	//run_test("simd_ma_unrolled_dot_prod", simd_ma_unrolled_dot_prod);
-	run_test("parallel_simd_ma_unrolled_dot_prod", parallel_simd_ma_unrolled_dot_prod);
+	//run_test("parallel_simd_ma_unrolled_dot_prod", parallel_simd_ma_unrolled_dot_prod);
 
 
-	run_test("parallel_omp_simd_dot_prod", parallel_omp_simd_dot_prod);
+	//run_test("parallel_omp_simd_dot_prod", parallel_omp_simd_dot_prod);
 
 	//run_test("blocked_dot_prod", blocked_dot_prod);
-	//run_test("parallel_blocked_dot_prod", parallel_blocked_dot_prod);
-	//run_test("blocked_simd_dot_prod", blocked_simd_dot_prod);
-	//run_test("parallel_blocked_simd_dot_prod", parallel_blocked_simd_dot_prod);
-	//run_test("blocked_simd_ma_unrolled_dot_prod", blocked_simd_ma_unrolled_dot_prod);
+	run_test("parallel_blocked_dot_prod", parallel_blocked_dot_prod);
+	run_test("blocked_simd_dot_prod", blocked_simd_dot_prod);
+	run_test("parallel_blocked_simd_dot_prod", parallel_blocked_simd_dot_prod);
+	run_test("blocked_simd_ma_unrolled_dot_prod", blocked_simd_ma_unrolled_dot_prod);
 	//run_test("parallel_blocked_simd_ma_unrolled_dot_prod", parallel_blocked_simd_ma_unrolled_dot_prod);
 
 	//run_test("parallel_simd_localbuffer_dot_prod", parallel_simd_localbuffer_dot_prod);
-	run_test("parallel_simd_localbuffer_blocked_dot_prod", parallel_simd_localbuffer_blocked_dot_prod);
+	//run_test("parallel_simd_localbuffer_blocked_dot_prod", parallel_simd_localbuffer_blocked_dot_prod);
 
 	return 0;
 }

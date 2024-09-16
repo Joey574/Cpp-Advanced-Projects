@@ -38,12 +38,13 @@ int main()
 void run_test(std::vector<int>(*sorter)(std::vector<int>), std::string name) {
 
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hConsole, YELLOW_TEXT); std::cout << name << ":\n";
 
     const int max_size = 8192;
     const int multiplier = 2;
     const int runs = 10;
 
-    SetConsoleTextAttribute(hConsole, YELLOW_TEXT); std::cout << name << ":\n";
+    srand(0);
 
     for (int size = 1024; size <= max_size; size *= multiplier) {
         std::vector<int> to_sort(size);
@@ -127,9 +128,7 @@ std::vector<int> bubble_sort(std::vector<int> unsorted) {
     for (int i = 0; i < unsorted.size() - 1; i++) {
         for (int j = 0; j < unsorted.size() - 1; j++) {
             if (unsorted[j] > unsorted[j + 1]) {
-                int t = unsorted[j + 1];
-                unsorted[j + 1] = unsorted[j];
-                unsorted[j] = t;
+                std::swap(unsorted[j + 1], unsorted[j]);
             }
         }
     }
@@ -151,11 +150,11 @@ std::vector<int> merge_sort(std::vector<int> unsorted) {
 
         if (a_idx >= a.size()) {
             // append b if we exhaust a
-            std::memcpy(&unsorted[i], &b[b_idx], (b.size() - b_idx) * sizeof(float));
+            std::copy(&b[b_idx], &b.back() + 1, &unsorted[i]);
             break;
         } else if (b_idx >= b.size()) {
             // append a if we exhaust b
-            std::memcpy(&unsorted[i], &a[a_idx], (a.size() - a_idx) * sizeof(float));
+            std::copy(&a[a_idx], &a.back() + 1, &unsorted[i]);
             break;
         } else {
             // set next element to min of a and b
@@ -237,7 +236,7 @@ std::vector<int> tim_sort(std::vector<int> unsorted) {
     }
     return unsorted;
 }
-
+ 
 std::vector<int> bogo_sort(std::vector<int> unsorted) {
 start:
     for (int k = 0; k < unsorted.size(); k++) {

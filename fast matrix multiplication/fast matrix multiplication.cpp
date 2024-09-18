@@ -4,7 +4,7 @@
 #include <random>
 #include <chrono>
 #include <immintrin.h>
-#include <omp.h>
+#include <numeric>
 #include <Windows.h>
 
 #define BLOCK_SIZE 64
@@ -39,28 +39,28 @@ struct matrix {
 std::string matrix_to_string(matrix a);
 void random_init(matrix& a);
 
-void run_test(std::string name, matrix(*dot)(const matrix, const matrix));
+void run_test(std::string name, matrix(*dot)(const matrix&, const matrix&));
 
-matrix bad_dot_prod(const matrix a, const matrix b);
-matrix base_dot_prod(const matrix a, const matrix b);
-matrix parallel_dot_prod(const matrix a, const matrix b);
+matrix bad_dot_prod(const matrix& a, const matrix& b);
+matrix base_dot_prod(const matrix& a, const matrix& b);
+matrix parallel_dot_prod(const matrix& a, const matrix& b);
 
-matrix simd_dot_prod(const matrix a, const matrix b);
-matrix parallel_simd_dot_prod(const matrix a, const matrix b);
-matrix simd_ma_unrolled_dot_prod(const matrix a, const matrix b);
-matrix parallel_simd_ma_unrolled_dot_prod(const matrix a, const matrix b);
+matrix simd_dot_prod(const matrix& a, const matrix& b);
+matrix parallel_simd_dot_prod(const matrix& a, const matrix& b);
+matrix simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b);
+matrix parallel_simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b);
 
-matrix parallel_omp_simd_dot_prod(const matrix a, const matrix b);
+matrix parallel_omp_simd_dot_prod(const matrix& __restrict a, const matrix& __restrict b);
 
-matrix blocked_dot_prod(const matrix a, const matrix b);
-matrix parallel_blocked_dot_prod(const matrix a, const matrix b);
-matrix blocked_simd_dot_prod(const matrix a, const matrix b);
-matrix parallel_blocked_simd_dot_prod(const matrix a, const matrix b);
-matrix blocked_simd_ma_unrolled_dot_prod(const matrix a, const matrix b);
-matrix parallel_blocked_simd_ma_unrolled_dot_prod(const matrix a, const matrix b);
+matrix blocked_dot_prod(const matrix& a, const matrix& b);
+matrix parallel_blocked_dot_prod(const matrix& a, const matrix& b);
+matrix blocked_simd_dot_prod(const matrix& a, const matrix& b);
+matrix parallel_blocked_simd_dot_prod(const matrix& a, const matrix& b);
+matrix blocked_simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b);
+matrix parallel_blocked_simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b);
 
-matrix parallel_simd_localbuffer_dot_prod(const matrix a, const matrix b);
-matrix parallel_simd_localbuffer_blocked_dot_prod(const matrix a, const matrix b);
+matrix parallel_simd_localbuffer_dot_prod(const matrix& a, const matrix& b);
+matrix parallel_simd_localbuffer_blocked_dot_prod(const matrix& a, const matrix& b);
 
 void simple_test(matrix(*dot)(const matrix, const matrix)) {
 	matrix a; a.rows = 10; a.columns = 10;
@@ -79,26 +79,53 @@ void simple_test(matrix(*dot)(const matrix, const matrix)) {
 	std::cout << matrix_to_string(dot(a, b));
 }
 
+void vector_test(const std::vector<float>& __restrict a, const std::vector<float>& __restrict b, std::vector<float>& __restrict c) {
+
+	#pragma omp simd
+	for (size_t i = 0; i < a.size(); i++) {
+		c[i] = a[i] + b[i];
+	}
+}
+
+std::vector<float> vector_test_2(std::vector<float> a, std::vector<float> b) {
+	std::vector<float> c(a.size(), 0);
+
+	#pragma omp simd
+	for (size_t i = 0; i < a.size(); i++) {
+		c[i] += a[i] + b[i];
+	}
+
+	return c;
+}
+
 int main()
 {
 	SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS);
+
+	/*std::vector<float> a(64, 2);
+	std::vector<float> b(64, 5);
+	std::vector<float> c(64);
+
+	vector_test(a, b, c);
+	vector_test_2(a, b);
+
+	return 0;*/
 
 	//run_test("bad_dot_prod", bad_dot_prod);
 	//run_test("base_dot_prod", base_dot_prod);
 	//run_test("parallel_dot_prod", parallel_dot_prod);
 
-	//run_test("simd_dot_prod", simd_dot_prod);
+	run_test("simd_dot_prod", simd_dot_prod);
 	//run_test("parallel_simd_dot_prod", parallel_simd_dot_prod);
-	//run_test("simd_ma_unrolled_dot_prod", simd_ma_unrolled_dot_prod);
+	run_test("simd_ma_unrolled_dot_prod", simd_ma_unrolled_dot_prod);
 	//run_test("parallel_simd_ma_unrolled_dot_prod", parallel_simd_ma_unrolled_dot_prod);
-
 
 	//run_test("parallel_omp_simd_dot_prod", parallel_omp_simd_dot_prod);
 
 	//run_test("blocked_dot_prod", blocked_dot_prod);
-	run_test("parallel_blocked_dot_prod", parallel_blocked_dot_prod);
+	//run_test("parallel_blocked_dot_prod", parallel_blocked_dot_prod);
 	run_test("blocked_simd_dot_prod", blocked_simd_dot_prod);
-	run_test("parallel_blocked_simd_dot_prod", parallel_blocked_simd_dot_prod);
+	//run_test("parallel_blocked_simd_dot_prod", parallel_blocked_simd_dot_prod);
 	run_test("blocked_simd_ma_unrolled_dot_prod", blocked_simd_ma_unrolled_dot_prod);
 	//run_test("parallel_blocked_simd_ma_unrolled_dot_prod", parallel_blocked_simd_ma_unrolled_dot_prod);
 
@@ -132,19 +159,20 @@ void random_init(matrix& a) {
 	}
 }
 
-void run_test(std::string name, matrix(*dot)(const matrix, const matrix)) {
+void run_test(std::string name, matrix(*dot)(const matrix&, const matrix&)) {
 
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
 	const int max_size = 1024;
 	const int multiplier = 2;
-	const int runs = 10;
+	int runs = 1024;
 
 	matrix c;
 
 	SetConsoleTextAttribute(hConsole, YELLOW_TEXT);
 	std::cout << name << ":\n";
-	for (int size = 8; size <= max_size; size *= multiplier) {
+	for (int size = 8; size <= max_size; size *= multiplier, runs /= multiplier) {
+		runs = runs > 8 ? runs : 8;
 
 		matrix a; a.rows = size; a.columns = size;
 		matrix b; b.rows = size; b.columns = size;
@@ -152,7 +180,11 @@ void run_test(std::string name, matrix(*dot)(const matrix, const matrix)) {
 		random_init(a);
 		random_init(b);
 
-		double best[runs];
+		std::vector<double> best(runs);
+
+		// warmup runs
+		c = (*dot)(a, b);
+		c = (*dot)(a, b);
 
 		for (int i = 0; i < runs; i++) {
 			auto start = std::chrono::high_resolution_clock::now();
@@ -162,17 +194,20 @@ void run_test(std::string name, matrix(*dot)(const matrix, const matrix)) {
 
 		double min = *std::min_element(&best[0], &best[runs]);
 		double max = *std::max_element(&best[0], &best[runs]);
+		double sum = std::accumulate(&best[0], &best[runs], 0);
 
 		SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << "\t" << size << "x" << size << ": ";
 		SetConsoleTextAttribute(hConsole, GREEN_TEXT); std::cout << (min / 1000000.00) << "ms";  
 		SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << " - ";
-		SetConsoleTextAttribute(hConsole, RED_TEXT); std::cout << (max / 1000000.00) << "ms\n";
+		SetConsoleTextAttribute(hConsole, RED_TEXT); std::cout << (max / 1000000.00) << "ms";
+		SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << " :: ";
+		SetConsoleTextAttribute(hConsole, BLUE_TEXT); std::cout << (sum / (double)runs / 1000000.00) << "ms\n";
 
 		SetConsoleTextAttribute(hConsole, WHITE_TEXT);
 	}
 }
 
-matrix bad_dot_prod(const matrix a, const matrix b) {
+matrix bad_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
 	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
@@ -186,7 +221,7 @@ matrix bad_dot_prod(const matrix a, const matrix b) {
 
 	return c;
 }
-matrix base_dot_prod(const matrix a, const matrix b) {
+matrix base_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
 	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
@@ -200,7 +235,7 @@ matrix base_dot_prod(const matrix a, const matrix b) {
 
 	return c;
 }
-matrix parallel_dot_prod(const matrix a, const matrix b) {
+matrix parallel_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
 	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
@@ -216,7 +251,7 @@ matrix parallel_dot_prod(const matrix a, const matrix b) {
 	return c;
 }
 
-matrix simd_dot_prod(const matrix a, const matrix b) {
+matrix simd_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
 	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
@@ -241,7 +276,7 @@ matrix simd_dot_prod(const matrix a, const matrix b) {
 
 	return c;
 }
-matrix parallel_simd_dot_prod(const matrix a, const matrix b) {
+matrix parallel_simd_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
 	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
@@ -267,7 +302,7 @@ matrix parallel_simd_dot_prod(const matrix a, const matrix b) {
 
 	return c;
 }
-matrix simd_ma_unrolled_dot_prod(const matrix a, const matrix b) {
+matrix simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
 	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
@@ -300,7 +335,7 @@ matrix simd_ma_unrolled_dot_prod(const matrix a, const matrix b) {
 
 	return c;
 }
-matrix parallel_simd_ma_unrolled_dot_prod(const matrix a, const matrix b) {
+matrix parallel_simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
 	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
@@ -335,16 +370,16 @@ matrix parallel_simd_ma_unrolled_dot_prod(const matrix a, const matrix b) {
 	return c;
 }
 
-matrix parallel_omp_simd_dot_prod(const matrix a, const matrix b) {
+matrix parallel_omp_simd_dot_prod(const matrix& __restrict a, const matrix& __restrict b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
 	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
 	#pragma omp parallel for 
 	for (int i = 0; i < a.rows; i++) {
-		for (int j = 0; j < b.rows; j++) {
+		for (size_t j = 0; j < b.rows; j++) {
 
 			#pragma omp simd
-			for (int k = 0; k < b.columns; k++) {
+			for (size_t k = 0; k < b.columns; k++) {
 				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + k] * b._matrix[j * b.columns + k];
 			}
 		}
@@ -353,7 +388,7 @@ matrix parallel_omp_simd_dot_prod(const matrix a, const matrix b) {
 	return c;
 }
 
-matrix blocked_dot_prod(const matrix a, const matrix b) {
+matrix blocked_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
 	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
@@ -373,7 +408,7 @@ matrix blocked_dot_prod(const matrix a, const matrix b) {
 
 	return c;
 }
-matrix parallel_blocked_dot_prod(const matrix a, const matrix b) {
+matrix parallel_blocked_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
 	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
@@ -394,7 +429,7 @@ matrix parallel_blocked_dot_prod(const matrix a, const matrix b) {
 
 	return c;
 }
-matrix blocked_simd_dot_prod(const matrix a, const matrix b) {
+matrix blocked_simd_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
 	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
@@ -426,7 +461,7 @@ matrix blocked_simd_dot_prod(const matrix a, const matrix b) {
 
 	return c;
 }
-matrix parallel_blocked_simd_dot_prod(const matrix a, const matrix b) {
+matrix parallel_blocked_simd_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
 	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
@@ -459,7 +494,7 @@ matrix parallel_blocked_simd_dot_prod(const matrix a, const matrix b) {
 
 	return c;
 }
-matrix blocked_simd_ma_unrolled_dot_prod(const matrix a, const matrix b) {
+matrix blocked_simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
 	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
@@ -500,7 +535,7 @@ matrix blocked_simd_ma_unrolled_dot_prod(const matrix a, const matrix b) {
 
 	return c;
 }
-matrix parallel_blocked_simd_ma_unrolled_dot_prod(const matrix a, const matrix b) {
+matrix parallel_blocked_simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
 	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
@@ -543,7 +578,7 @@ matrix parallel_blocked_simd_ma_unrolled_dot_prod(const matrix a, const matrix b
 	return c;
 }
 
-matrix parallel_simd_localbuffer_dot_prod(const matrix a, const matrix b) {
+matrix parallel_simd_localbuffer_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
 	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
@@ -578,7 +613,7 @@ matrix parallel_simd_localbuffer_dot_prod(const matrix a, const matrix b) {
 
 	return c;
 }
-matrix parallel_simd_localbuffer_blocked_dot_prod(const matrix a, const matrix b) {
+matrix parallel_simd_localbuffer_blocked_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
 	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 
@@ -631,7 +666,7 @@ matrix parallel_simd_localbuffer_blocked_dot_prod(const matrix a, const matrix b
 	return c;
 }
 
-matrix strassens_dot_prod(const matrix a, const matrix b) {
+matrix strassens_dot_prod(const matrix& a, const matrix& b) {
 	matrix c; c.rows = a.rows; c.columns = b.columns;
 	c._matrix = std::vector<float>(a.rows * b.columns, 0);
 

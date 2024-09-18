@@ -170,6 +170,36 @@ std::vector<int> merge_sort(std::vector<int> unsorted) {
 
     return unsorted;
 }
+std::vector<int> three_way_merge_sort(std::vector<int> unsorted) {
+    if (unsorted.size() < 2) {
+        return unsorted;
+    }
+
+    std::vector<int> a = three_way_merge_sort(std::vector<int>(unsorted.begin(), unsorted.begin() + (unsorted.size() / 3)));
+    std::vector<int> b = three_way_merge_sort(std::vector<int>(unsorted.begin() + (unsorted.size() / 3), unsorted.begin() + ( 2 * unsorted.size() / 3)));
+    std::vector<int> c = three_way_merge_sort(std::vector<int>(unsorted.begin() + (2 * unsorted.size() / 3), unsorted.end()));
+
+    int a_idx = 0;
+    int b_idx = 0;
+    int c_idx = 0;
+
+    for (int i = 0; i < unsorted.size(); i++) {
+
+        // set element to min of a, b, and c and adjust indexes
+        if (a[a_idx] < b[b_idx] && a[a_idx] < c[c_idx]) {
+            unsorted[i] = a[a_idx];
+            a_idx++;
+        } else if (b[b_idx] < a[a_idx] && b[b_idx] < c[c_idx]) {
+            unsorted[i] = b[b_idx];
+            b_idx++;
+        } else {
+            unsorted[i] = c[c_idx];
+            c_idx++;
+        }
+    }
+
+    return unsorted;
+}
 std::vector<int> comb_sort(std::vector<int> unsorted) {
 
     // init gap to size of vector
@@ -197,43 +227,47 @@ std::vector<int> comb_sort(std::vector<int> unsorted) {
 std::vector<int> tim_sort(std::vector<int> unsorted) {
     int run_size = 32;
 
-    for (int i = 0; i < unsorted.size(); i += run_size) {
+    for (int i = 0; i <= unsorted.size(); i += run_size, run_size *= 2) {
+        auto t = insertion_sort({ &unsorted[i], &unsorted[i + run_size]});
 
-        // insertion sort over runs
-        for (int j = i + 1; j < unsorted.size() && j < i + run_size; j++) {
-            int val = unsorted[j];
-            int k = i - 1;
-
-            while (k >= 0 && unsorted[k] > val) {
-                unsorted[k + 1] = unsorted[k];
-                k--;
-            }
-            unsorted[k + 1] = val;
-        }
-    }
-
-    for (int i = 0; i < unsorted.size(); i += run_size, run_size *= 2) {
-
-
-
+        // copy t into unsorted
+        std::copy(&t[0], &t[run_size], &unsorted[i]);
     }
 
     /*
-    * use insertion sort over runs
-    * 
-    * merge runs using modified merge sort
-    * 
-    * double run size
-    * 
-    * loop {
-    *   merge runs
-    * }
-    * 
+    
+    Let痴 consider the following array as an example: arr[] = {4, 2, 8, 6, 1, 5, 9, 3, 7}.
+
+Step 1: Define the size of the run
+
+Minimum run size: 32 (we値l ignore this step since our array is small)
+Step 2: Divide the array into runs
+
+In this step, we値l use insertion sort to sort the small subsequences (runs) within the array.
+The initial array: [4, 2, 8, 6, 1, 5, 9, 3, 7]
+No initial runs are present, so we値l create runs using insertion sort.
+Sorted runs: [2, 4], [6, 8], [1, 5, 9], [3, 7]
+Updated array: [2, 4, 6, 8, 1, 5, 9, 3, 7]
+Step 3: Merge the runs
+
+In this step, we値l merge the sorted runs using a modified merge sort algorithm.
+Merge the runs until the entire array is sorted.
+Merged runs: [2, 4, 6, 8], [1, 3, 5, 7, 9]
+Updated array: [2, 4, 6, 8, 1, 3, 5, 7, 9]
+Step 4: Adjust the run size
+
+After each merge operation, we double the size of the run until it exceeds the length of the array.
+The run size doubles: 32, 64, 128 (we値l ignore this step since our array is small)
+Step 5: Continue merging
+
+Repeat the merging process until the entire array is sorted.
+Final merged run: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+The final sorted array is [1, 2, 3, 4, 5, 6, 7, 8, 9].
+
+
+    
     */
 
-    for (int i = 0; i < unsorted.size(); i++) {
-        std::cout << unsorted[i] << " ";
-    }
     return unsorted;
 }
  

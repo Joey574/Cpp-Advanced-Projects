@@ -39,7 +39,7 @@ struct matrix {
 std::string matrix_to_string(matrix a);
 void random_init(matrix& a);
 
-void run_test(std::string name, matrix(*dot)(const matrix&, const matrix&));
+void run_test(std::string name, matrix(*dot)(const matrix& __restrict, const matrix& __restrict));
 
 matrix bad_dot_prod(const matrix& a, const matrix& b);
 matrix base_dot_prod(const matrix& a, const matrix& b);
@@ -115,22 +115,22 @@ int main()
 	//run_test("base_dot_prod", base_dot_prod);
 	//run_test("parallel_dot_prod", parallel_dot_prod);
 
-	run_test("simd_dot_prod", simd_dot_prod);
+	//run_test("simd_dot_prod", simd_dot_prod);
 	//run_test("parallel_simd_dot_prod", parallel_simd_dot_prod);
-	run_test("simd_ma_unrolled_dot_prod", simd_ma_unrolled_dot_prod);
-	//run_test("parallel_simd_ma_unrolled_dot_prod", parallel_simd_ma_unrolled_dot_prod);
+	//run_test("simd_ma_unrolled_dot_prod", simd_ma_unrolled_dot_prod);
+	run_test("parallel_simd_ma_unrolled_dot_prod", parallel_simd_ma_unrolled_dot_prod);
 
-	//run_test("parallel_omp_simd_dot_prod", parallel_omp_simd_dot_prod);
+	run_test("parallel_omp_simd_dot_prod", parallel_omp_simd_dot_prod);
 
 	//run_test("blocked_dot_prod", blocked_dot_prod);
 	//run_test("parallel_blocked_dot_prod", parallel_blocked_dot_prod);
-	run_test("blocked_simd_dot_prod", blocked_simd_dot_prod);
+	//run_test("blocked_simd_dot_prod", blocked_simd_dot_prod);
 	//run_test("parallel_blocked_simd_dot_prod", parallel_blocked_simd_dot_prod);
-	run_test("blocked_simd_ma_unrolled_dot_prod", blocked_simd_ma_unrolled_dot_prod);
-	//run_test("parallel_blocked_simd_ma_unrolled_dot_prod", parallel_blocked_simd_ma_unrolled_dot_prod);
+	//run_test("blocked_simd_ma_unrolled_dot_prod", blocked_simd_ma_unrolled_dot_prod);
+	run_test("parallel_blocked_simd_ma_unrolled_dot_prod", parallel_blocked_simd_ma_unrolled_dot_prod);
 
 	//run_test("parallel_simd_localbuffer_dot_prod", parallel_simd_localbuffer_dot_prod);
-	//run_test("parallel_simd_localbuffer_blocked_dot_prod", parallel_simd_localbuffer_blocked_dot_prod);
+	run_test("parallel_simd_localbuffer_blocked_dot_prod", parallel_simd_localbuffer_blocked_dot_prod);
 
 	return 0;
 }
@@ -159,7 +159,7 @@ void random_init(matrix& a) {
 	}
 }
 
-void run_test(std::string name, matrix(*dot)(const matrix&, const matrix&)) {
+void run_test(std::string name, matrix(*dot)(const matrix& __restrict, const matrix& __restrict)) {
 
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -170,7 +170,7 @@ void run_test(std::string name, matrix(*dot)(const matrix&, const matrix&)) {
 	matrix c;
 
 	SetConsoleTextAttribute(hConsole, YELLOW_TEXT);
-	std::cout << name << ":\n";
+	std::cout << "\n" << name << ":\n";
 	for (int size = 8; size <= max_size; size *= multiplier, runs /= multiplier) {
 		runs = runs > 8 ? runs : 8;
 
@@ -201,7 +201,10 @@ void run_test(std::string name, matrix(*dot)(const matrix&, const matrix&)) {
 		SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << " - ";
 		SetConsoleTextAttribute(hConsole, RED_TEXT); std::cout << (max / 1000000.00) << "ms";
 		SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << " :: ";
-		SetConsoleTextAttribute(hConsole, BLUE_TEXT); std::cout << (sum / (double)runs / 1000000.00) << "ms\n";
+		SetConsoleTextAttribute(hConsole, BLUE_TEXT); std::cout << (sum / (double)runs / 1000000.00) << "ms";
+		SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << " taken over ";
+		SetConsoleTextAttribute(hConsole, YELLOW_TEXT); std::cout << runs;
+		SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << " runs\n";
 
 		SetConsoleTextAttribute(hConsole, WHITE_TEXT);
 	}
@@ -214,7 +217,7 @@ matrix bad_dot_prod(const matrix& a, const matrix& b) {
 	for (size_t i = 0; i < a.rows; i++) {
 		for (size_t j = 0; j < b.columns; j++) {
 			for (size_t k = 0; k < b.rows; k++) {
-				c._matrix[i * b.columns + j] += a._matrix[i * a.columns + j] * b._matrix[k * b.columns + j];
+				c._matrix[i * b.columns + j] += a._matrix[i * a.columns + k] * b._matrix[k * b.columns + j];
 			}
 		}
 	}
@@ -228,7 +231,7 @@ matrix base_dot_prod(const matrix& a, const matrix& b) {
 	for (size_t i = 0; i < a.rows; i++) {
 		for (size_t j = 0; j < b.rows; j++) {
 			for (size_t k = 0; k < b.columns; k++) {
-				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + k] * b._matrix[j * b.columns + k];
+				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + j] * b._matrix[j * b.columns + k];
 			}
 		}
 	}
@@ -243,7 +246,7 @@ matrix parallel_dot_prod(const matrix& a, const matrix& b) {
 	for (int i = 0; i < a.rows; i++) {
 		for (int j = 0; j < b.rows; j++) {
 			for (int k = 0; k < b.columns; k++) {
-				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + k] * b._matrix[j * b.columns + k];
+				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + j] * b._matrix[j * b.columns + k];
 			}
 		}
 	}
@@ -257,19 +260,20 @@ matrix simd_dot_prod(const matrix& a, const matrix& b) {
 
 	for (size_t i = 0; i < a.rows; i++) {
 		for (size_t j = 0; j < b.rows; j++) {
+			__m256 scalar = _mm256_set1_ps(a._matrix[i * a.columns + j]);
 
 			size_t k = 0;
 			for (; k + 8 <= b.columns; k += 8) {
 				_mm256_store_ps(&c._matrix[i * b.columns + k],
 					_mm256_fmadd_ps(
-						_mm256_load_ps(&a._matrix[i * a.columns + k]),
+						scalar,
 						_mm256_load_ps(&b._matrix[j * b.columns + k]),
 						_mm256_load_ps(&c._matrix[i * b.columns + k])
 						));
 			}
 
 			for (; k < b.columns; k++) {
-				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + k] * b._matrix[j * b.columns + k];
+				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + j] * b._matrix[j * b.columns + k];
 			}
 		}
 	}
@@ -284,18 +288,20 @@ matrix parallel_simd_dot_prod(const matrix& a, const matrix& b) {
 	for (int i = 0; i < a.rows; i++) {
 		for (int j = 0; j < b.rows; j++) {
 
+			__m256 scalar = _mm256_set1_ps(a._matrix[i * a.columns + j]);
+
 			int k = 0;
 			for (; k + 8 <= b.columns; k += 8) {
 				_mm256_store_ps(&c._matrix[i * b.columns + k],
 					_mm256_fmadd_ps(
-						_mm256_load_ps(&a._matrix[i * a.columns + k]),
+						scalar ,
 						_mm256_load_ps(&b._matrix[j * b.columns + k]),
 						_mm256_load_ps(&c._matrix[i * b.columns + k])
 					));
 			}
 
 			for (; k < b.columns; k++) {
-				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + k] * b._matrix[j * b.columns + k];
+				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + j] * b._matrix[j * b.columns + k];
 			}
 		}
 	}
@@ -309,11 +315,13 @@ matrix simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b) {
 	for (size_t i = 0; i < a.rows; i++) {
 		for (size_t j = 0; j < b.rows; j++) {
 
+			__m256 scalar = _mm256_set1_ps(a._matrix[i * a.columns + j]);
+
 			size_t k = 0;
 			for (; k + 16 <= b.columns; k += 8) {
 				_mm256_store_ps(&c._matrix[i * b.columns + k],
 					_mm256_fmadd_ps(
-						_mm256_load_ps(&a._matrix[i * a.columns + k]),
+						scalar,
 						_mm256_load_ps(&b._matrix[j * b.columns + k]),
 						_mm256_load_ps(&c._matrix[i * b.columns + k])
 					));
@@ -321,14 +329,14 @@ matrix simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b) {
 				k += 8;
 				_mm256_store_ps(&c._matrix[i * b.columns + k],
 					_mm256_fmadd_ps(
-						_mm256_load_ps(&a._matrix[i * a.columns + k]),
+						scalar,
 						_mm256_load_ps(&b._matrix[j * b.columns + k]),
 						_mm256_load_ps(&c._matrix[i * b.columns + k])
 					));
 			}
 
 			for (; k < b.columns; k++) {
-				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + k] * b._matrix[j * b.columns + k];
+				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + j] * b._matrix[j * b.columns + k];
 			}
 		}
 	}
@@ -343,11 +351,13 @@ matrix parallel_simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b) {
 	for (int i = 0; i < a.rows; i++) {
 		for (int j = 0; j < b.rows; j++) {
 
+			__m256 scalar = _mm256_set1_ps(a._matrix[i * a.columns + j]);
+
 			int k = 0;
 			for (; k + 16 <= b.columns; k += 8) {
 				_mm256_store_ps(&c._matrix[i * b.columns + k],
 					_mm256_fmadd_ps(
-						_mm256_load_ps(&a._matrix[i * a.columns + k]),
+						scalar,
 						_mm256_load_ps(&b._matrix[j * b.columns + k]),
 						_mm256_load_ps(&c._matrix[i * b.columns + k])
 					));
@@ -355,14 +365,14 @@ matrix parallel_simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b) {
 				k += 8;
 				_mm256_store_ps(&c._matrix[i * b.columns + k],
 					_mm256_fmadd_ps(
-						_mm256_load_ps(&a._matrix[i * a.columns + k]),
+						scalar,
 						_mm256_load_ps(&b._matrix[j * b.columns + k]),
 						_mm256_load_ps(&c._matrix[i * b.columns + k])
 					));
 			}
 
 			for (; k < b.columns; k++) {
-				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + k] * b._matrix[j * b.columns + k];
+				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + j] * b._matrix[j * b.columns + k];
 			}
 		}
 	}
@@ -380,7 +390,7 @@ matrix parallel_omp_simd_dot_prod(const matrix& __restrict a, const matrix& __re
 
 			#pragma omp simd
 			for (size_t k = 0; k < b.columns; k++) {
-				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + k] * b._matrix[j * b.columns + k];
+				c._matrix[i * b.columns + k] += a._matrix[i * a.columns + j] * b._matrix[j * b.columns + k];
 			}
 		}
 	}
@@ -398,7 +408,7 @@ matrix blocked_dot_prod(const matrix& a, const matrix& b) {
 				for (size_t l = i; l < i + BLOCK_SIZE && l < a.rows; l++) {
 					for (size_t m = j; m < j + BLOCK_SIZE && m < b.rows; m++) {
 						for (size_t n = k; n < k + BLOCK_SIZE && n < b.columns; n++) {
-							c._matrix[l * b.columns + n] += a._matrix[l * a.columns + n] * b._matrix[m * b.columns + n];
+							c._matrix[l * b.columns + n] += a._matrix[l * a.columns + m] * b._matrix[m * b.columns + n];
 						}
 					}
 				}
@@ -414,12 +424,12 @@ matrix parallel_blocked_dot_prod(const matrix& a, const matrix& b) {
 
 	#pragma omp parallel for
 	for (int i = 0; i < a.rows; i += BLOCK_SIZE) {
-		for (int j = 0; j < b.rows; j += BLOCK_SIZE) {
-			for (int k = 0; k < b.columns; k += BLOCK_SIZE) {
-				for (int l = i; l < i + BLOCK_SIZE && l < a.rows; l++) {
-					for (int m = j; m < j + BLOCK_SIZE && m < b.rows; m++) {
-						for (int n = k; n < k + BLOCK_SIZE && n < b.columns; n++) {
-							c._matrix[l * b.columns + n] += a._matrix[l * a.columns + n] * b._matrix[m * b.columns + n];
+		for (size_t j = 0; j < b.rows; j += BLOCK_SIZE) {
+			for (size_t k = 0; k < b.columns; k += BLOCK_SIZE) {
+				for (size_t l = i; l < i + BLOCK_SIZE && l < a.rows; l++) {
+					for (size_t m = j; m < j + BLOCK_SIZE && m < b.rows; m++) {
+						for (size_t n = k; n < k + BLOCK_SIZE && n < b.columns; n++) {
+							c._matrix[l * b.columns + n] += a._matrix[l * a.columns + m] * b._matrix[m * b.columns + n];
 						}
 					}
 				}
@@ -440,18 +450,20 @@ matrix blocked_simd_dot_prod(const matrix& a, const matrix& b) {
 				for (size_t l = i; l < i + BLOCK_SIZE && l < a.rows; l++) {
 					for (size_t m = j; m < j + BLOCK_SIZE && m < b.rows; m++) {
 
+						__m256 scalar = _mm256_set1_ps(a._matrix[l * a.columns + m]);
+
 						size_t n = k;
 						for (; n + 8 <= k + BLOCK_SIZE && n + 8 <= b.columns; n += 8) {
 							_mm256_store_ps(&c._matrix[l * b.columns + n],
 								_mm256_fmadd_ps(
-									_mm256_load_ps(&a._matrix[l * a.columns + n]),
+									scalar,
 									_mm256_load_ps(&b._matrix[m * b.columns + n]),
 									_mm256_load_ps(&c._matrix[l * b.columns + n])
 								));
 						}
 
 						for (; n < k + BLOCK_SIZE && n < b.columns; n++) {
-							c._matrix[l * b.columns + n] += a._matrix[l * a.columns + n] * b._matrix[m * b.columns + n];
+							c._matrix[l * b.columns + n] += a._matrix[l * a.columns + m] * b._matrix[m * b.columns + n];
 						}
 					}
 				}
@@ -467,24 +479,26 @@ matrix parallel_blocked_simd_dot_prod(const matrix& a, const matrix& b) {
 
 	#pragma omp parallel for
 	for (int i = 0; i < a.rows; i += BLOCK_SIZE) {
-		for (int j = 0; j < b.rows; j += BLOCK_SIZE) {
-			for (int k = 0; k < b.columns; k += BLOCK_SIZE) {
+		for (size_t j = 0; j < b.rows; j += BLOCK_SIZE) {
+			for (size_t k = 0; k < b.columns; k += BLOCK_SIZE) {
 
-				for (int l = i; l < i + BLOCK_SIZE && l < a.rows; l++) {
-					for (int m = j; m < j + BLOCK_SIZE && m < b.rows; m++) {
+				for (size_t l = i; l < i + BLOCK_SIZE && l < a.rows; l++) {
+					for (size_t m = j; m < j + BLOCK_SIZE && m < b.rows; m++) {
 
-						int n = k;
+						__m256 scalar = _mm256_set1_ps(a._matrix[l * a.columns + m]);
+
+						size_t n = k;
 						for (; n + 8 <= k + BLOCK_SIZE && n + 8 <= b.columns; n += 8) {
 							_mm256_store_ps(&c._matrix[l * b.columns + n],
 								_mm256_fmadd_ps(
-									_mm256_load_ps(&a._matrix[l * a.columns + n]),
+									scalar,
 									_mm256_load_ps(&b._matrix[m * b.columns + n]),
 									_mm256_load_ps(&c._matrix[l * b.columns + n])
 								));
 						}
 
 						for (; n < k + BLOCK_SIZE && n < b.columns; n++) {
-							c._matrix[l * b.columns + n] += a._matrix[l * a.columns + n] * b._matrix[m * b.columns + n];
+							c._matrix[l * b.columns + n] += a._matrix[l * a.columns + m] * b._matrix[m * b.columns + n];
 						}
 					}
 				}
@@ -505,12 +519,14 @@ matrix blocked_simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b) {
 				for (size_t l = i; l < i + BLOCK_SIZE && l < a.rows; l++) {
 					for (size_t m = j; m < j + BLOCK_SIZE && m < b.rows; m++) {
 
+						__m256 scalar = _mm256_set1_ps(a._matrix[l * a.columns + m]);
+
 						size_t n = k;
 						for (; n + 16 <= k + BLOCK_SIZE && n + 16 <= b.columns; n += 8) {
 
 							_mm256_store_ps(&c._matrix[l * b.columns + n],
 								_mm256_fmadd_ps(
-									_mm256_load_ps(&a._matrix[l * a.columns + n]),
+									scalar,
 									_mm256_load_ps(&b._matrix[m * b.columns + n]),
 									_mm256_load_ps(&c._matrix[l * b.columns + n])
 								));
@@ -518,14 +534,14 @@ matrix blocked_simd_ma_unrolled_dot_prod(const matrix& a, const matrix& b) {
 							n += 8;
 							_mm256_store_ps(&c._matrix[l * b.columns + n],
 								_mm256_fmadd_ps(
-									_mm256_load_ps(&a._matrix[l * a.columns + n]),
+									scalar,
 									_mm256_load_ps(&b._matrix[m * b.columns + n]),
 									_mm256_load_ps(&c._matrix[l * b.columns + n])
 								));
 						}
 
 						for (; n < k + BLOCK_SIZE && n < b.columns; n++) {
-							c._matrix[l * b.columns + n] += a._matrix[l * a.columns + n] * b._matrix[m * b.columns + n];
+							c._matrix[l * b.columns + n] += a._matrix[l * a.columns + m] * b._matrix[m * b.columns + n];
 						}
 					}
 				}
@@ -541,18 +557,20 @@ matrix parallel_blocked_simd_ma_unrolled_dot_prod(const matrix& a, const matrix&
 
 	#pragma omp parallel for
 	for (int i = 0; i < a.rows; i += BLOCK_SIZE) {
-		for (int j = 0; j < b.rows; j += BLOCK_SIZE) {
-			for (int k = 0; k < b.columns; k += BLOCK_SIZE) {
+		for (size_t j = 0; j < b.rows; j += BLOCK_SIZE) {
+			for (size_t k = 0; k < b.columns; k += BLOCK_SIZE) {
 
-				for (int l = i; l < i + BLOCK_SIZE && l < a.rows; l++) {
-					for (int m = j; m < j + BLOCK_SIZE && m < b.rows; m++) {
+				for (size_t l = i; l < i + BLOCK_SIZE && l < a.rows; l++) {
+					for (size_t m = j; m < j + BLOCK_SIZE && m < b.rows; m++) {
 
-						int n = k;
+						__m256 scalar = _mm256_set1_ps(a._matrix[l * a.columns + m]);
+
+						size_t n = k;
 						for (; n + 16 <= k + BLOCK_SIZE && n + 16 <= b.columns; n += 8) {
 
 							_mm256_store_ps(&c._matrix[l * b.columns + n],
 								_mm256_fmadd_ps(
-									_mm256_load_ps(&a._matrix[l * a.columns + n]),
+									scalar,
 									_mm256_load_ps(&b._matrix[m * b.columns + n]),
 									_mm256_load_ps(&c._matrix[l * b.columns + n])
 								));
@@ -560,14 +578,14 @@ matrix parallel_blocked_simd_ma_unrolled_dot_prod(const matrix& a, const matrix&
 							n += 8;
 							_mm256_store_ps(&c._matrix[l * b.columns + n],
 								_mm256_fmadd_ps(
-									_mm256_load_ps(&a._matrix[l * a.columns + n]),
+									scalar,
 									_mm256_load_ps(&b._matrix[m * b.columns + n]),
 									_mm256_load_ps(&c._matrix[l * b.columns + n])
 								));
 						}
 
 						for (; n < k + BLOCK_SIZE && n < b.columns; n++) {
-							c._matrix[l * b.columns + n] += a._matrix[l * a.columns + n] * b._matrix[m * b.columns + n];
+							c._matrix[l * b.columns + n] += a._matrix[l * a.columns + m] * b._matrix[m * b.columns + n];
 						}
 					}
 				}
@@ -591,20 +609,22 @@ matrix parallel_simd_localbuffer_dot_prod(const matrix& a, const matrix& b) {
 
 	#pragma omp parallel for
 	for (int i = 0; i < a.rows; i++) {
-		for (int j = 0; j < b.rows; j++) {
+		for (size_t j = 0; j < b.rows; j++) {
 
-			int k = 0;
+			__m256 scalar = _mm256_set1_ps(local_a[i * a.columns + j]);
+
+			size_t k = 0;
 			for (; k + 8 <= b.columns; k += 8) {
 				_mm256_store_ps(&local_c[i * b.columns + k],
 					_mm256_fmadd_ps(
-						_mm256_load_ps(&local_a[i * a.columns + k]),
+						scalar,
 						_mm256_load_ps(&local_b[j * b.columns + k]),
 						_mm256_load_ps(&local_c[i * b.columns + k])
 				));
 			}
 
 			for (; k < b.columns; k++) {
-				local_c[i * b.columns + k] += local_a[i * a.columns + k] * local_b[j * b.columns + k];
+				local_c[i * b.columns + k] += local_a[i * a.columns + j] * local_b[j * b.columns + k];
 			}
 		}
 	}
@@ -619,36 +639,42 @@ matrix parallel_simd_localbuffer_blocked_dot_prod(const matrix& a, const matrix&
 
 	#pragma omp parallel for
 	for (int i = 0; i < a.rows; i += BLOCK_SIZE) {
-		for (int j = 0; j < b.rows; j += BLOCK_SIZE) {
-			for (int k = 0; k < b.columns; k += BLOCK_SIZE) {
+		for (size_t j = 0; j < b.rows; j += BLOCK_SIZE) {
+			for (size_t k = 0; k < b.columns; k += BLOCK_SIZE) {
 
-				for (int a_r = 0; a_r < BLOCK_SIZE; a_r++) {
+				for (size_t a_r = 0; a_r < BLOCK_SIZE; a_r++) {
 					#pragma omp simd
-					for (int a_c = 0; a_c < BLOCK_SIZE; a_c++) {
+					for (size_t a_c = 0; a_c < BLOCK_SIZE; a_c++) {
 						LOCAL_A[a_r * BLOCK_SIZE + a_c] = a_r + i >= a.rows || a_c + j >= a.columns ? 0.0f : a._matrix[(a_r + i) * a.columns + (a_c + j)];
 					}
 				}
 
-				for (int b_r = 0; b_r < BLOCK_SIZE; b_r++) {
+				for (size_t b_r = 0; b_r < BLOCK_SIZE; b_r++) {
 					#pragma omp simd
-					for (int b_c = 0; b_c < BLOCK_SIZE; b_c++) {
+					for (size_t b_c = 0; b_c < BLOCK_SIZE; b_c++) {
 						LOCAL_B[b_r * BLOCK_SIZE + b_c] = b_r + j >= b.rows || b_c + k >= b.columns ? 0.0f : b._matrix[(b_r + j) * b.columns + (b_c + k)];
 					}
 				}
 				std::fill(&LOCAL_C[0], &LOCAL_C[BLOCK_SIZE * BLOCK_SIZE], 0);
 
 
-				for (int l = 0; l < BLOCK_SIZE; l++) {
-					for (int m = 0; m < BLOCK_SIZE; m++) {
+				for (size_t l = 0; l < BLOCK_SIZE; l++) {
+					for (size_t m = 0; m < BLOCK_SIZE; m++) {
 
-						int n = 0;
+						__m256 scalar = _mm256_set1_ps(LOCAL_A[l * BLOCK_SIZE + m]);
+
+						size_t n = 0;
 						for (; n + 8 <= BLOCK_SIZE; n += 8) {
 							_mm256_store_ps(&LOCAL_C[l * BLOCK_SIZE + n],
 								_mm256_fmadd_ps(
-									_mm256_load_ps(&LOCAL_A[l * BLOCK_SIZE + n]),
+									scalar,
 									_mm256_load_ps(&LOCAL_B[m * BLOCK_SIZE + n]),
 									_mm256_load_ps(&LOCAL_C[l * BLOCK_SIZE + n])
 								));
+						}
+
+						for (; n < BLOCK_SIZE; n++) {
+							LOCAL_C[l * BLOCK_SIZE + n] += LOCAL_A[l * BLOCK_SIZE + m] * LOCAL_B[m * BLOCK_SIZE + n];
 						}
 					}
 				}

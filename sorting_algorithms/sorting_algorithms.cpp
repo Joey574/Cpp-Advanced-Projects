@@ -16,8 +16,10 @@ std::vector<int> selecition_sort(std::vector<int> unsorted);
 std::vector<int> insertion_sort(std::vector<int> unsorted);
 std::vector<int> bubble_sort(std::vector<int> unsorted);
 std::vector<int> merge_sort(std::vector<int> unsorted);
-std::vector<int> comb_sort(std::vector<int> unsroted);
+std::vector<int> comb_sort(std::vector<int> unsorted);
 std::vector<int> tim_sort(std::vector<int> unsorted);
+
+std::vector<int> expand_and_collapse_sort(std::vector<int> unsorted);
 
 std::vector<int> bogo_sort(std::vector<int> unsorted);
 std::vector<int> bogo_seed_find(std::vector<int> unsorted);
@@ -28,6 +30,8 @@ int main()
     run_test(insertion_sort, "insertion sort");
     run_test(bubble_sort, "bubble sort");
     run_test(merge_sort, "merge sort");
+
+    run_test(expand_and_collapse_sort, "expand_and_collapse_sort");
     //run_test(comb_sort, "comb sort"); -> needs to be fixed
     //run_test(tim_sort, "tim sort"); -> needs to be made
 
@@ -65,6 +69,9 @@ void run_test(std::vector<int>(*sorter)(std::vector<int>), std::string name) {
 
         double best[runs];
 
+        // warmup runs
+        sorter(to_sort);
+
         for (int r = 0; r < runs; r++) {
             auto start = std::chrono::high_resolution_clock::now();
             std::vector<int> sorted = sorter(to_sort);
@@ -76,7 +83,6 @@ void run_test(std::vector<int>(*sorter)(std::vector<int>), std::string name) {
                     break;
                 }
             }
-
         }
         
         double min = *std::min_element(&best[0], &best[runs]);
@@ -271,6 +277,27 @@ The final sorted array is [1, 2, 3, 4, 5, 6, 7, 8, 9].
     return unsorted;
 }
  
+std::vector<int> expand_and_collapse_sort(std::vector<int> unsorted) {
+    int m = *std::max_element(unsorted.begin(), unsorted.end());
+
+    std::vector<int> expand(m + 1, 0);
+
+    // set indexes
+    for (int i = 0; i < unsorted.size(); i++) {
+        expand[unsorted[i]]++;
+    }
+
+    int idx = 0;
+    for (int i = 0; i < expand.size(); i++) {
+        for (int j = 0; j < expand[i]; j++) {
+            unsorted[idx] = i;
+            idx++;
+        }
+    }
+
+    return unsorted;
+}
+
 std::vector<int> bogo_sort(std::vector<int> unsorted) {
 start:
     for (int k = 0; k < unsorted.size(); k++) {

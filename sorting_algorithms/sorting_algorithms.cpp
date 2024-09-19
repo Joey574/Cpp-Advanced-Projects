@@ -3,6 +3,7 @@
 #include <string>
 #include <chrono>
 #include <Windows.h>
+#include <numeric>
 
 #define RED_TEXT 4
 #define GREEN_TEXT 10
@@ -18,8 +19,7 @@ std::vector<int> bubble_sort(std::vector<int> unsorted);
 std::vector<int> merge_sort(std::vector<int> unsorted);
 std::vector<int> comb_sort(std::vector<int> unsorted);
 std::vector<int> tim_sort(std::vector<int> unsorted);
-
-std::vector<int> expand_and_collapse_sort(std::vector<int> unsorted);
+std::vector<int> countintg_sort(std::vector<int> unsorted);
 
 std::vector<int> bogo_sort(std::vector<int> unsorted);
 std::vector<int> bogo_seed_find(std::vector<int> unsorted);
@@ -46,16 +46,18 @@ void run_test(std::vector<int>(*sorter)(std::vector<int>), std::string name) {
 
     const int max_size = 8192;
     const int multiplier = 2;
-    const int runs = 10;
+    int runs = 8192;
 
     srand(0);
 
-    for (int size = 1024; size <= max_size; size *= multiplier) {
+    for (int size = 1024; size <= max_size; size *= multiplier, runs /= multiplier) {
         std::vector<int> to_sort(size);
 
-        // init values to 0->size - 1
+        runs = runs < 8 ? 8 : runs;
+
         for (int i = 0; i < to_sort.size(); i++) {
-            to_sort[i] = i;
+            //to_sort[i] = i;
+            to_sort[i] = rand() % 100000;
         }
 
         // shuffle
@@ -67,7 +69,7 @@ void run_test(std::vector<int>(*sorter)(std::vector<int>), std::string name) {
             to_sort[r] = t;
         }
 
-        double best[runs];
+        std::vector<double> best(runs);
 
         // warmup runs
         sorter(to_sort);
@@ -75,10 +77,10 @@ void run_test(std::vector<int>(*sorter)(std::vector<int>), std::string name) {
         for (int r = 0; r < runs; r++) {
             auto start = std::chrono::high_resolution_clock::now();
             std::vector<int> sorted = sorter(to_sort);
-            best[r] = (std::chrono::high_resolution_clock::now() - start).count();
+            best[r] = (std::chrono::high_resolution_clock::now() - start).count() / 1000000.00;
 
-            for (int i = 0; i < sorted.size(); i++) {
-                if (sorted[i] != i) {
+            for (int i = 0; i < sorted.size() - 1; i++) {
+                if (sorted[i] > sorted[i + 1]) {
                     std::cout << name << " failed\n";
                     break;
                 }
@@ -87,11 +89,17 @@ void run_test(std::vector<int>(*sorter)(std::vector<int>), std::string name) {
         
         double min = *std::min_element(&best[0], &best[runs]);
         double max = *std::max_element(&best[0], &best[runs]);
+        double sum = std::accumulate(&best[0], &best[runs], 0.0);
 
         SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << "\t" << size << ": ";
-        SetConsoleTextAttribute(hConsole, GREEN_TEXT); std::cout << (min / 1000000.00) << "ms";
+        SetConsoleTextAttribute(hConsole, GREEN_TEXT); std::cout << min << "ms";
         SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << " - ";
-        SetConsoleTextAttribute(hConsole, RED_TEXT); std::cout << (max / 1000000.00) << "ms\n";
+        SetConsoleTextAttribute(hConsole, RED_TEXT); std::cout << max << "ms";
+        SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << " :: ";
+        SetConsoleTextAttribute(hConsole, BLUE_TEXT); std::cout << (sum / (double)runs) << "ms";
+        SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << " taken over ";
+        SetConsoleTextAttribute(hConsole, YELLOW_TEXT); std::cout << runs;
+        SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << " runs\n";
 
         SetConsoleTextAttribute(hConsole, WHITE_TEXT);
     }
@@ -276,11 +284,10 @@ The final sorted array is [1, 2, 3, 4, 5, 6, 7, 8, 9].
 
     return unsorted;
 }
- 
-std::vector<int> expand_and_collapse_sort(std::vector<int> unsorted) {
+std::vector<int> countintg_sort(std::vector<int> unsorted) {
     int m = *std::max_element(unsorted.begin(), unsorted.end());
 
-    std::vector<int> expand(m + 1, 0);
+    std::vector<u_int> expand(m + 1, 0);
 
     // set indexes
     for (int i = 0; i < unsorted.size(); i++) {

@@ -116,16 +116,16 @@ int main()
 	//run_test("parallel_dot_prod", parallel_dot_prod);
 
 	//run_test("simd_dot_prod", simd_dot_prod);
-	//run_test("parallel_simd_dot_prod", parallel_simd_dot_prod);
+	run_test("parallel_simd_dot_prod", parallel_simd_dot_prod);
 	//run_test("simd_ma_unrolled_dot_prod", simd_ma_unrolled_dot_prod);
 	run_test("parallel_simd_ma_unrolled_dot_prod", parallel_simd_ma_unrolled_dot_prod);
 
-	run_test("parallel_omp_simd_dot_prod", parallel_omp_simd_dot_prod);
+	//run_test("parallel_omp_simd_dot_prod", parallel_omp_simd_dot_prod);
 
 	//run_test("blocked_dot_prod", blocked_dot_prod);
 	//run_test("parallel_blocked_dot_prod", parallel_blocked_dot_prod);
 	//run_test("blocked_simd_dot_prod", blocked_simd_dot_prod);
-	//run_test("parallel_blocked_simd_dot_prod", parallel_blocked_simd_dot_prod);
+	run_test("parallel_blocked_simd_dot_prod", parallel_blocked_simd_dot_prod);
 	//run_test("blocked_simd_ma_unrolled_dot_prod", blocked_simd_ma_unrolled_dot_prod);
 	run_test("parallel_blocked_simd_ma_unrolled_dot_prod", parallel_blocked_simd_ma_unrolled_dot_prod);
 
@@ -184,24 +184,23 @@ void run_test(std::string name, matrix(*dot)(const matrix& __restrict, const mat
 
 		// warmup runs
 		c = (*dot)(a, b);
-		c = (*dot)(a, b);
 
 		for (int i = 0; i < runs; i++) {
 			auto start = std::chrono::high_resolution_clock::now();
 			c = (*dot)(a, b);
-			best[i] = (std::chrono::high_resolution_clock::now() - start).count();
+			best[i] = (std::chrono::high_resolution_clock::now() - start).count() / 1000000.00;
 		}
 
 		double min = *std::min_element(&best[0], &best[runs]);
-		double max = *std::max_element(&best[0], &best[runs]);
-		double sum = std::accumulate(&best[0], &best[runs], 0);
-
+		double max = *std::max_element(&best[0], &best[runs]); 
+		double sum = std::accumulate(&best[0], &best[runs], 0.0);
+		 
 		SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << "\t" << size << "x" << size << ": ";
-		SetConsoleTextAttribute(hConsole, GREEN_TEXT); std::cout << (min / 1000000.00) << "ms";  
+		SetConsoleTextAttribute(hConsole, GREEN_TEXT); std::cout << min << "ms";  
 		SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << " - ";
-		SetConsoleTextAttribute(hConsole, RED_TEXT); std::cout << (max / 1000000.00) << "ms";
+		SetConsoleTextAttribute(hConsole, RED_TEXT); std::cout << max << "ms";
 		SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << " :: ";
-		SetConsoleTextAttribute(hConsole, BLUE_TEXT); std::cout << (sum / (double)runs / 1000000.00) << "ms";
+		SetConsoleTextAttribute(hConsole, BLUE_TEXT); std::cout << (double)(sum / runs) << "ms";
 		SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << " taken over ";
 		SetConsoleTextAttribute(hConsole, YELLOW_TEXT); std::cout << runs;
 		SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << " runs\n";

@@ -31,7 +31,7 @@ int main()
     run_test(bubble_sort, "bubble sort");
     run_test(merge_sort, "merge sort");
 
-    run_test(expand_and_collapse_sort, "expand_and_collapse_sort");
+    run_test(countintg_sort, "countintg_sort");
     //run_test(comb_sort, "comb sort"); -> needs to be fixed
     //run_test(tim_sort, "tim sort"); -> needs to be made
 

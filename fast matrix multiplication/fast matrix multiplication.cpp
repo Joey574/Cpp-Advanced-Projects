@@ -6,6 +6,9 @@
 #include <immintrin.h>
 #include <numeric>
 #include <Windows.h>
+#include <cuda.h>
+
+#include "cuda_implementations.cuh"
 
 #define BLOCK_SIZE 64
 alignas(64) float LOCAL_A[BLOCK_SIZE * BLOCK_SIZE];
@@ -63,9 +66,12 @@ matrix parallel_blocked_simd_ma_unrolled_dot_prod(const matrix& a, const matrix&
 matrix parallel_simd_localbuffer_dot_prod(const matrix& a, const matrix& b);
 matrix parallel_simd_localbuffer_blocked_dot_prod(const matrix& a, const matrix& b);
 
-void simple_test(matrix(*dot)(const matrix&, const matrix&)) {
-	matrix a; a.rows = 10; a.columns = 20;
-	matrix b; b.rows = 15; b.columns = 10;
+matrix cuda_dot_prod(const matrix& a, const matrix& b);
+
+
+void simple_test(matrix(*dot)(const matrix, const matrix)) {
+	matrix a; a.rows = 10; a.columns = 10;
+	matrix b; b.rows = 10; b.columns = 10;
 
 	a._matrix = std::vector<float>(a.rows * a.columns);
 	b._matrix = std::vector<float>(b.rows * b.columns);
@@ -79,7 +85,6 @@ void simple_test(matrix(*dot)(const matrix&, const matrix&)) {
 
 	std::cout << matrix_to_string(dot(a, b)) << "\n";
 }
-
 void vector_test(const std::vector<float>& __restrict a, const std::vector<float>& __restrict b, std::vector<float>& __restrict c) {
 
 	#pragma omp simd
@@ -121,17 +126,19 @@ int main()
 	//run_test("simd_ma_unrolled_dot_prod", simd_ma_unrolled_dot_prod);
 	run_test("parallel_simd_ma_unrolled_dot_prod", parallel_simd_ma_unrolled_dot_prod);
 
-	run_test("parallel_omp_simd_dot_prod", parallel_omp_simd_dot_prod);
+	//run_test("parallel_omp_simd_dot_prod", parallel_omp_simd_dot_prod);
 
 	//run_test("blocked_dot_prod", blocked_dot_prod);
 	//run_test("parallel_blocked_dot_prod", parallel_blocked_dot_prod);
 	//run_test("blocked_simd_dot_prod", blocked_simd_dot_prod);
 	//run_test("parallel_blocked_simd_dot_prod", parallel_blocked_simd_dot_prod);
 	//run_test("blocked_simd_ma_unrolled_dot_prod", blocked_simd_ma_unrolled_dot_prod);
-	run_test("parallel_blocked_simd_ma_unrolled_dot_prod", parallel_blocked_simd_ma_unrolled_dot_prod);
+	//run_test("parallel_blocked_simd_ma_unrolled_dot_prod", parallel_blocked_simd_ma_unrolled_dot_prod);
 
 	//run_test("parallel_simd_localbuffer_dot_prod", parallel_simd_localbuffer_dot_prod);
-	run_test("parallel_simd_localbuffer_blocked_dot_prod", parallel_simd_localbuffer_blocked_dot_prod);
+	//run_test("parallel_simd_localbuffer_blocked_dot_prod", parallel_simd_localbuffer_blocked_dot_prod);
+
+	run_test("cuda_dot_prod", cuda_dot_prod);
 
 	return 0;
 }
@@ -185,24 +192,23 @@ void run_test(std::string name, matrix(*dot)(const matrix& __restrict, const mat
 
 		// warmup runs
 		c = (*dot)(a, b);
-		c = (*dot)(a, b);
 
 		for (int i = 0; i < runs; i++) {
 			auto start = std::chrono::high_resolution_clock::now();
 			c = (*dot)(a, b);
-			best[i] = (std::chrono::high_resolution_clock::now() - start).count();
+			best[i] = (std::chrono::high_resolution_clock::now() - start).count() / 1000000.00;
 		}
 
 		double min = *std::min_element(&best[0], &best[runs]);
-		double max = *std::max_element(&best[0], &best[runs]);
-		double sum = std::accumulate(&best[0], &best[runs], 0);
-
+		double max = *std::max_element(&best[0], &best[runs]); 
+		double sum = std::accumulate(&best[0], &best[runs], 0.0);
+		 
 		SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << "\t" << size << "x" << size << ": ";
-		SetConsoleTextAttribute(hConsole, GREEN_TEXT); std::cout << (min / 1000000.00) << "ms";  
+		SetConsoleTextAttribute(hConsole, GREEN_TEXT); std::cout << min << "ms";  
 		SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << " - ";
-		SetConsoleTextAttribute(hConsole, RED_TEXT); std::cout << (max / 1000000.00) << "ms";
+		SetConsoleTextAttribute(hConsole, RED_TEXT); std::cout << max << "ms";
 		SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << " :: ";
-		SetConsoleTextAttribute(hConsole, BLUE_TEXT); std::cout << (sum / (double)runs / 1000000.00) << "ms";
+		SetConsoleTextAttribute(hConsole, BLUE_TEXT); std::cout << (double)(sum / runs) << "ms";
 		SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << " taken over ";
 		SetConsoleTextAttribute(hConsole, YELLOW_TEXT); std::cout << runs;
 		SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << " runs\n";
@@ -689,6 +695,36 @@ matrix parallel_simd_localbuffer_blocked_dot_prod(const matrix& a, const matrix&
 			}
 		}
 	}
+
+	return c;
+}
+
+matrix cuda_dot_prod(const matrix& a, const matrix& b) {
+	matrix c; c.rows = a.rows; c.columns = b.columns;
+	c._matrix = std::vector<float>(a.rows * b.columns, 0);
+
+	float* d_a;
+	float* d_b;
+	float* d_c;
+
+	cudaMalloc(&d_a, a.rows * a.columns * sizeof(float));
+	cudaMalloc(&d_b, b.rows * b.columns * sizeof(float));
+
+	cudaMalloc(&d_c, a.rows * b.columns * sizeof(float));
+
+	cudaMemcpy(d_a, a._matrix.data(), a.rows * a.columns * sizeof(float), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_b, b._matrix.data(), b.rows * b.columns * sizeof(float), cudaMemcpyHostToDevice);
+
+	dim3 dim_block(4, 3, 1);
+	dim3 dim_grid(ceil(a.rows / 4.0f), ceil(a.rows / 3.0f), 1);
+
+	call_kernal(d_a, d_b, d_c, a.rows, dim_grid, dim_block);
+
+	cudaMemcpy(c._matrix.data(), d_c, c.rows * c.columns * sizeof(float), cudaMemcpyDeviceToHost);
+
+	cudaFree(d_a);
+	cudaFree(d_b);
+	cudaFree(d_c);
 
 	return c;
 }

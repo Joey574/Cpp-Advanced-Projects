@@ -2,6 +2,7 @@
 #include <thread>
 #include <string>
 #include <vector>
+#include <future>
 
 #define THREAD_NUM 10
 
@@ -11,12 +12,11 @@ void test() {
 
 int main()
 {
-	std::vector<float> a(100, 5);
-	std::vector<float> b(100, 2);
+	std::packaged_task<void()> task(test);
 
-	std::thread threads[THREAD_NUM];
+	std::future future = task.get_future();
 
-	for (std::thread& thread : threads) {
-		thread.join();
-	}
+	std::thread thread(std::move(task));
+
+	future.wait_for(std::chrono::seconds(1));
 }

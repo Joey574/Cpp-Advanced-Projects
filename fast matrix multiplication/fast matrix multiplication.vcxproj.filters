@@ -19,4 +19,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="cuda_implementations.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="cuda_implementations.cuh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>

@@ -54,6 +54,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.1.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -135,11 +136,24 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <CudaCompile>
+      <FastMath>true</FastMath>
+    </CudaCompile>
+    <CudaLink>
+      <PerformDeviceLinkTimeOptimization>true</PerformDeviceLinkTimeOptimization>
+    </CudaLink>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="fast matrix multiplication.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="cuda_implementations.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="cuda_implementations.cuh" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.1.targets" />
   </ImportGroup>
 </Project>

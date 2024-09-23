@@ -26,12 +26,11 @@ std::vector<int> bogo_seed_find(std::vector<int> unsorted);
 
 int main()
 {
-    run_test(selecition_sort, "selection sort");
+    //run_test(selecition_sort, "selection sort");
     run_test(insertion_sort, "insertion sort");
-    run_test(bubble_sort, "bubble sort");
+    //run_test(bubble_sort, "bubble sort");
     run_test(merge_sort, "merge sort");
-
-    run_test(expand_and_collapse_sort, "expand_and_collapse_sort");
+    run_test(countintg_sort, "countintg_sort");
     //run_test(comb_sort, "comb sort"); -> needs to be fixed
     //run_test(tim_sort, "tim sort"); -> needs to be made
 
@@ -46,7 +45,7 @@ void run_test(std::vector<int>(*sorter)(std::vector<int>), std::string name) {
 
     const int max_size = 8192;
     const int multiplier = 2;
-    int runs = 8192;
+    int runs = 4096;
 
     srand(0);
 
@@ -71,7 +70,7 @@ void run_test(std::vector<int>(*sorter)(std::vector<int>), std::string name) {
 
         std::vector<double> best(runs);
 
-        // warmup runs
+        // warmup run
         sorter(to_sort);
 
         for (int r = 0; r < runs; r++) {
@@ -294,9 +293,9 @@ std::vector<int> countintg_sort(std::vector<int> unsorted) {
         expand[unsorted[i]]++;
     }
 
-    int idx = 0;
-    for (int i = 0; i < expand.size(); i++) {
-        for (int j = 0; j < expand[i]; j++) {
+    size_t idx = 0;
+    for (size_t i = 0; i < expand.size(); i++) {
+        for (size_t j = 0; j < expand[i]; j++) {
             unsorted[idx] = i;
             idx++;
         }

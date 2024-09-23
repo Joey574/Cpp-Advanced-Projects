@@ -27,6 +27,7 @@ alignas(64) float LINE_C[LINE_SIZE];
 #define YELLOW_TEXT 6
 #define PURPLE_TEXT 13
 
+float mult = 2;
 
 struct matrix {
 	size_t rows;
@@ -62,9 +63,9 @@ matrix parallel_blocked_simd_ma_unrolled_dot_prod(const matrix& a, const matrix&
 matrix parallel_simd_localbuffer_dot_prod(const matrix& a, const matrix& b);
 matrix parallel_simd_localbuffer_blocked_dot_prod(const matrix& a, const matrix& b);
 
-void simple_test(matrix(*dot)(const matrix, const matrix)) {
-	matrix a; a.rows = 10; a.columns = 10;
-	matrix b; b.rows = 10; b.columns = 10;
+void simple_test(matrix(*dot)(const matrix&, const matrix&)) {
+	matrix a; a.rows = 10; a.columns = 20;
+	matrix b; b.rows = 15; b.columns = 10;
 
 	a._matrix = std::vector<float>(a.rows * a.columns);
 	b._matrix = std::vector<float>(b.rows * b.columns);
@@ -76,7 +77,7 @@ void simple_test(matrix(*dot)(const matrix, const matrix)) {
 		}
 	}
 
-	std::cout << matrix_to_string(dot(a, b));
+	std::cout << matrix_to_string(dot(a, b)) << "\n";
 }
 
 void vector_test(const std::vector<float>& __restrict a, const std::vector<float>& __restrict b, std::vector<float>& __restrict c) {

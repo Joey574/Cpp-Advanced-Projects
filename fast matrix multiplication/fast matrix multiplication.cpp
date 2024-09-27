@@ -30,6 +30,7 @@ alignas(64) float LINE_C[LINE_SIZE];
 #define YELLOW_TEXT 6
 #define PURPLE_TEXT 13
 
+float mult = 2;
 
 struct matrix {
 	size_t rows;
@@ -82,7 +83,7 @@ void simple_test(matrix(*dot)(const matrix, const matrix)) {
 		}
 	}
 
-	std::cout << matrix_to_string(dot(a, b));
+	std::cout << matrix_to_string(dot(a, b)) << "\n";
 }
 void vector_test(const std::vector<float>& __restrict a, const std::vector<float>& __restrict b, std::vector<float>& __restrict c) {
 

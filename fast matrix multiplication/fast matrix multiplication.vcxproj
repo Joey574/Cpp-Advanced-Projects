@@ -138,9 +138,11 @@
     </Link>
     <CudaCompile>
       <FastMath>true</FastMath>
+      <Optimization>O3</Optimization>
     </CudaCompile>
     <CudaLink>
       <PerformDeviceLinkTimeOptimization>true</PerformDeviceLinkTimeOptimization>
+      <Optimization>O3</Optimization>
     </CudaLink>
   </ItemDefinitionGroup>
   <ItemGroup>

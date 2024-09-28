@@ -26,7 +26,7 @@ std::vector<int> bogo_seed_find(std::vector<int> unsorted);
 
 int main()
 {
-    //run_test(selecition_sort, "selection sort");
+    run_test(selecition_sort, "selection sort");
     run_test(insertion_sort, "insertion sort");
     //run_test(bubble_sort, "bubble sort");
     run_test(merge_sort, "merge sort");

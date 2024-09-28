@@ -6,7 +6,6 @@
 #include <immintrin.h>
 #include <numeric>
 #include <Windows.h>
-#include <cuda.h>
 
 #include "cuda_implementations.cuh"
 
@@ -171,7 +170,7 @@ void run_test(std::string name, matrix(*dot)(const matrix& __restrict, const mat
 
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
-	const int max_size = 1024;
+	const int max_size = 2048;
 	const int multiplier = 2;
 	int runs = 1024;
 

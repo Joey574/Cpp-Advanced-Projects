@@ -20,6 +20,7 @@ std::vector<int> selecition_sort(std::vector<int> unsorted);
 std::vector<int> insertion_sort(std::vector<int> unsorted);
 std::vector<int> bubble_sort(std::vector<int> unsorted);
 std::vector<int> merge_sort(std::vector<int> unsorted);
+std::vector<int> three_way_merge_sort(std::vector<int> unsorted);
 std::vector<int> comb_sort(std::vector<int> unsorted);
 std::vector<int> tim_sort(std::vector<int> unsorted);
 std::vector<int> countintg_sort(std::vector<int> unsorted);
@@ -34,7 +35,7 @@ int main()
     //run_test(insertion_sort, "insertion sort");
     //run_test(bubble_sort, "bubble sort");
     //run_test(merge_sort, "merge sort");
-
+    run_test(three_way_merge_sort, "three_way_merge_sort");
     //run_test(countintg_sort, "countintg sort");
     //run_test(comb_sort, "comb sort");
     //run_test(tim_sort, "tim sort"); // -> needs to be made
@@ -221,6 +222,10 @@ std::vector<int> three_way_merge_sort(std::vector<int> unsorted) {
 
     for (int i = 0; i < unsorted.size(); i++) {
 
+        if (a_idx > a.size()) {
+
+        }
+ 
         // set element to min of a, b, and c and adjust indexes
         if (a[a_idx] < b[b_idx] && a[a_idx] < c[c_idx]) {
             unsorted[i] = a[a_idx];

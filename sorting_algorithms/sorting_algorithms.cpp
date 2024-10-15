@@ -13,6 +13,9 @@
 #define PURPLE_TEXT 13
 
 void run_test(std::vector<int>(*sorter)(std::vector<int>), std::string name);
+void simple_test(std::vector<int>(*sorter)(std::vector<int>));
+void shuffle(std::vector<int>& a);
+
 std::vector<int> selecition_sort(std::vector<int> unsorted);
 std::vector<int> insertion_sort(std::vector<int> unsorted);
 std::vector<int> bubble_sort(std::vector<int> unsorted);
@@ -20,25 +23,36 @@ std::vector<int> merge_sort(std::vector<int> unsorted);
 std::vector<int> comb_sort(std::vector<int> unsorted);
 std::vector<int> tim_sort(std::vector<int> unsorted);
 std::vector<int> countintg_sort(std::vector<int> unsorted);
+std::vector<int> shell_sort(std::vector<int> unsorted);
 
 std::vector<int> bogo_sort(std::vector<int> unsorted);
 std::vector<int> bogo_seed_find(std::vector<int> unsorted);
 
 int main()
 {
-    run_test(selecition_sort, "selection sort");
-    run_test(insertion_sort, "insertion sort");
+    //run_test(selecition_sort, "selection sort");
+    //run_test(insertion_sort, "insertion sort");
     //run_test(bubble_sort, "bubble sort");
-    run_test(merge_sort, "merge sort");
+    //run_test(merge_sort, "merge sort");
 
-    run_test(countintg_sort, "countintg_sort");
-    //run_test(comb_sort, "comb sort"); -> needs to be fixed
-    //run_test(tim_sort, "tim sort"); -> needs to be made
+    //run_test(countintg_sort, "countintg sort");
+    //run_test(comb_sort, "comb sort");
+    //run_test(tim_sort, "tim sort"); // -> needs to be made
+    run_test(shell_sort, "shell sort");
 
     //run_test(bogo_sort, "bogo sort");
     //run_test(bogo_seed_find, "seed find: ");
 }
 
+void shuffle(std::vector<int>& a) {
+    for (int k = 0; k < a.size(); k++) {
+        int r = k + rand() % (a.size() - k);
+
+        int t = a[k];
+        a[k] = a[r];
+        a[r] = t;
+    }
+}
 void run_test(std::vector<int>(*sorter)(std::vector<int>), std::string name) {
 
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -60,14 +74,7 @@ void run_test(std::vector<int>(*sorter)(std::vector<int>), std::string name) {
             to_sort[i] = rand() % 100000;
         }
 
-        // shuffle
-        for (int k = 0; k < to_sort.size(); k++) {
-            int r = k + rand() % (to_sort.size() - k);
-
-            int t = to_sort[k];
-            to_sort[k] = to_sort[r];
-            to_sort[r] = t;
-        }
+        shuffle(to_sort);
 
         std::vector<double> best(runs);
 
@@ -103,6 +110,21 @@ void run_test(std::vector<int>(*sorter)(std::vector<int>), std::string name) {
 
         SetConsoleTextAttribute(hConsole, WHITE_TEXT);
     }
+}
+void simple_test(std::vector<int>(*sorter)(std::vector<int>)) {
+    std::vector<int> to_sort(100);
+
+    for (int i = 0; i < to_sort.size(); i++) {
+        to_sort[i] = i;
+    }
+
+    shuffle(to_sort);
+
+    to_sort = sorter(to_sort);
+
+    for (int i = 0; i < to_sort.size(); i++) {
+        std::cout << to_sort[i] << " ";
+    } std::cout << "\n";
 }
 
 std::vector<int> selecition_sort(std::vector<int> unsorted) {
@@ -216,18 +238,17 @@ std::vector<int> three_way_merge_sort(std::vector<int> unsorted) {
 }
 std::vector<int> comb_sort(std::vector<int> unsorted) {
 
-    // init gap to size of vector
     int gap = unsorted.size();
     bool swap = true;
 
-    while (gap > 0 && swap) {
+    while (gap > 1 || swap) {
 
-        // scale gap by 10/13
-        gap = (int)(gap * (10.0f / 13.0f));
-
+        gap = (gap * 10 / 13) < 1 ? 1 : (gap * 10 / 13);
         swap = false;
+
         for (int i = 0; i < unsorted.size() - gap; i++) {
             if (unsorted[i] > unsorted[i + gap]) {
+
                 int t = unsorted[i];
                 unsorted[i] = unsorted[i + gap];
                 unsorted[i + gap] = t;
@@ -299,6 +320,24 @@ std::vector<int> countintg_sort(std::vector<int> unsorted) {
         for (size_t j = 0; j < expand[i]; j++) {
             unsorted[idx] = i;
             idx++;
+        }
+    }
+
+    return unsorted;
+}
+std::vector<int> shell_sort(std::vector<int> unsorted) {
+    for (int gap = unsorted.size() / 2; gap > 0; gap /= 2) {
+
+        for (int i = gap; i < unsorted.size(); i++)
+        {
+            int t = unsorted[i];
+            int j;
+
+            for (j = i; j >= gap && unsorted[j - gap] > t; j -= gap) {
+                unsorted[j] = unsorted[j - gap];
+            }
+
+            unsorted[j] = t;
         }
     }
 

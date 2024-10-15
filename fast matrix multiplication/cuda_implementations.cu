@@ -8,8 +8,8 @@ __global__ void cu_dot_prod(float* a, float* b, float* c, int n) {
 		float sum = 0.0f;
 
 		for (int k = 0; k < n; k++) {
-			//sum = __fmaf_ieee_rn(a[i * n + k], b[k * n + j], sum);
-			sum += a[i * n + k] * b[k * n + j];
+			sum = __fmaf_ieee_rn(a[i * n + k], b[k * n + j], sum);
+			//sum += a[i * n + k] * b[k * n + j];
 		}
 
 		c[i * n + j] = sum;

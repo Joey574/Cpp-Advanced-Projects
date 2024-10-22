@@ -1,17 +1,20 @@
 #include "cuda_implementations.cuh"
 
 __global__ void cu_dot_prod(float* a, float* b, float* c, int n) {
-	int i = blockDim.y * blockIdx.y + threadIdx.y;
-	int j = blockDim.x * blockIdx.x + threadIdx.x;
+	int i = blockDim.x * blockIdx.x + threadIdx.x;
 
-	if (i < n && j < n) {
+	int row = i / n;
+	int col = i % n;
+
+	if (row < n) {
 		float sum = 0.0f;
 
 		for (int k = 0; k < n; k++) {
-			sum += a[i * n + k] * b[k * n + j];
+			sum = __fmaf_ieee_rn(a[row * n + k], b[k * n + col], sum);
+			//sum += a[i * n + k] * b[k * n + j];
 		}
 
-		c[i * n + j] = sum;
+		c[row * n + col] = sum;
 	}
 }
 

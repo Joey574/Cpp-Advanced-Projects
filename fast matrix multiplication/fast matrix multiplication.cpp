@@ -6,7 +6,6 @@
 #include <immintrin.h>
 #include <numeric>
 #include <Windows.h>
-#include <cuda.h>
 
 #include "cuda_implementations.cuh"
 
@@ -124,7 +123,7 @@ int main()
 	//run_test("simd_dot_prod", simd_dot_prod);
 	//run_test("parallel_simd_dot_prod", parallel_simd_dot_prod);
 	//run_test("simd_ma_unrolled_dot_prod", simd_ma_unrolled_dot_prod);
-	run_test("parallel_simd_ma_unrolled_dot_prod", parallel_simd_ma_unrolled_dot_prod);
+	//run_test("parallel_simd_ma_unrolled_dot_prod", parallel_simd_ma_unrolled_dot_prod);
 
 	//run_test("parallel_omp_simd_dot_prod", parallel_omp_simd_dot_prod);
 
@@ -139,6 +138,8 @@ int main()
 	//run_test("parallel_simd_localbuffer_blocked_dot_prod", parallel_simd_localbuffer_blocked_dot_prod);
 
 	run_test("cuda_dot_prod", cuda_dot_prod);
+
+	std::cout << cudaGetErrorString(cudaGetLastError());
 
 	return 0;
 }
@@ -171,7 +172,7 @@ void run_test(std::string name, matrix(*dot)(const matrix& __restrict, const mat
 
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
-	const int max_size = 1024;
+	const int max_size = 2048;
 	const int multiplier = 2;
 	int runs = 1024;
 
@@ -715,8 +716,8 @@ matrix cuda_dot_prod(const matrix& a, const matrix& b) {
 	cudaMemcpy(d_a, a._matrix.data(), a.rows * a.columns * sizeof(float), cudaMemcpyHostToDevice);
 	cudaMemcpy(d_b, b._matrix.data(), b.rows * b.columns * sizeof(float), cudaMemcpyHostToDevice);
 
-	dim3 dim_block(4, 3, 1);
-	dim3 dim_grid(ceil(a.rows / 4.0f), ceil(a.rows / 3.0f), 1);
+	dim3 dim_block(8);
+	dim3 dim_grid(ceil((a.rows * b.columns) / 8.0f));
 
 	call_kernal(d_a, d_b, d_c, a.rows, dim_grid, dim_block);
 

@@ -29,6 +29,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "template_metaprogramming_fo
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "find_prime_numbers", "find_prime_numbers\find_prime_numbers.vcxproj", "{D0E7FDA9-F40C-4AD9-BEE4-FF722CD103CF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fast_feature_extraction", "fast_feature_extraction\fast_feature_extraction.vcxproj", "{7CE8E24B-27CA-4906-893E-0308026E128A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -141,6 +143,14 @@ Global
 		{D0E7FDA9-F40C-4AD9-BEE4-FF722CD103CF}.Release|x64.Build.0 = Release|x64
 		{D0E7FDA9-F40C-4AD9-BEE4-FF722CD103CF}.Release|x86.ActiveCfg = Release|Win32
 		{D0E7FDA9-F40C-4AD9-BEE4-FF722CD103CF}.Release|x86.Build.0 = Release|Win32
+		{7CE8E24B-27CA-4906-893E-0308026E128A}.Debug|x64.ActiveCfg = Debug|x64
+		{7CE8E24B-27CA-4906-893E-0308026E128A}.Debug|x64.Build.0 = Debug|x64
+		{7CE8E24B-27CA-4906-893E-0308026E128A}.Debug|x86.ActiveCfg = Debug|Win32
+		{7CE8E24B-27CA-4906-893E-0308026E128A}.Debug|x86.Build.0 = Debug|Win32
+		{7CE8E24B-27CA-4906-893E-0308026E128A}.Release|x64.ActiveCfg = Release|x64
+		{7CE8E24B-27CA-4906-893E-0308026E128A}.Release|x64.Build.0 = Release|x64
+		{7CE8E24B-27CA-4906-893E-0308026E128A}.Release|x86.ActiveCfg = Release|Win32
+		{7CE8E24B-27CA-4906-893E-0308026E128A}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

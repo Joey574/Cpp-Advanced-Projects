@@ -116,30 +116,28 @@ int main()
 
 	return 0;*/
 
-	//run_test("bad_dot_prod", bad_dot_prod);
-	//run_test("base_dot_prod", base_dot_prod);
-	//run_test("parallel_dot_prod", parallel_dot_prod);
+	run_test("bad_dot_prod", bad_dot_prod);
+	run_test("base_dot_prod", base_dot_prod);
+	run_test("parallel_dot_prod", parallel_dot_prod);
 
-	//run_test("simd_dot_prod", simd_dot_prod);
-	//run_test("parallel_simd_dot_prod", parallel_simd_dot_prod);
+	run_test("simd_dot_prod", simd_dot_prod);
+	run_test("parallel_simd_dot_prod", parallel_simd_dot_prod);
 	//run_test("simd_ma_unrolled_dot_prod", simd_ma_unrolled_dot_prod);
-	//run_test("parallel_simd_ma_unrolled_dot_prod", parallel_simd_ma_unrolled_dot_prod);
+	run_test("parallel_simd_ma_unrolled_dot_prod", parallel_simd_ma_unrolled_dot_prod);
 
 	//run_test("parallel_omp_simd_dot_prod", parallel_omp_simd_dot_prod);
 
 	//run_test("blocked_dot_prod", blocked_dot_prod);
 	//run_test("parallel_blocked_dot_prod", parallel_blocked_dot_prod);
 	//run_test("blocked_simd_dot_prod", blocked_simd_dot_prod);
-	//run_test("parallel_blocked_simd_dot_prod", parallel_blocked_simd_dot_prod);
+	run_test("parallel_blocked_simd_dot_prod", parallel_blocked_simd_dot_prod);
 	//run_test("blocked_simd_ma_unrolled_dot_prod", blocked_simd_ma_unrolled_dot_prod);
-	//run_test("parallel_blocked_simd_ma_unrolled_dot_prod", parallel_blocked_simd_ma_unrolled_dot_prod);
+	run_test("parallel_blocked_simd_ma_unrolled_dot_prod", parallel_blocked_simd_ma_unrolled_dot_prod);
 
 	//run_test("parallel_simd_localbuffer_dot_prod", parallel_simd_localbuffer_dot_prod);
-	//run_test("parallel_simd_localbuffer_blocked_dot_prod", parallel_simd_localbuffer_blocked_dot_prod);
+	run_test("parallel_simd_localbuffer_blocked_dot_prod", parallel_simd_localbuffer_blocked_dot_prod);
 
 	run_test("cuda_dot_prod", cuda_dot_prod);
-
-	std::cout << cudaGetErrorString(cudaGetLastError());
 
 	return 0;
 }
@@ -172,9 +170,11 @@ void run_test(std::string name, matrix(*dot)(const matrix& __restrict, const mat
 
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
-	const int max_size = 2048;
+	const int max_size = 1024;
 	const int multiplier = 2;
 	int runs = 1024;
+
+	const int size_format_length = (std::to_string(max_size).length() * 2) + 2;
 
 	matrix c;
 
@@ -193,6 +193,8 @@ void run_test(std::string name, matrix(*dot)(const matrix& __restrict, const mat
 
 		// warmup runs
 		c = (*dot)(a, b);
+		c = (*dot)(a, b);
+		c = (*dot)(a, b);
 
 		for (int i = 0; i < runs; i++) {
 			auto start = std::chrono::high_resolution_clock::now();
@@ -203,9 +205,13 @@ void run_test(std::string name, matrix(*dot)(const matrix& __restrict, const mat
 		double min = *std::min_element(&best[0], &best[runs]);
 		double max = *std::max_element(&best[0], &best[runs]); 
 		double sum = std::accumulate(&best[0], &best[runs], 0.0);
+
+		std::string formatted_size = std::to_string(size).append("x").append(std::to_string(size)).append(":"); formatted_size.resize(size_format_length, ' ');
+
+		std::string formatted_minmax = std::to_string(min); formatted_minmax.resize(8, ' '); formatted_minmax.append("- ").append(std::to_string(max)); 
 		 
-		SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << "\t" << size << "x" << size << ": ";
-		SetConsoleTextAttribute(hConsole, GREEN_TEXT); std::cout << min << "ms";  
+		SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << "\t" << formatted_size << "\t";
+		SetConsoleTextAttribute(hConsole, GREEN_TEXT); std::cout << min << "ms";
 		SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << " - ";
 		SetConsoleTextAttribute(hConsole, RED_TEXT); std::cout << max << "ms";
 		SetConsoleTextAttribute(hConsole, WHITE_TEXT); std::cout << " :: ";

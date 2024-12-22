@@ -31,7 +31,7 @@ struct matrix {
 	matrix() : rows(0), columns(0), _matrix(nullptr) {}
 	matrix(size_t r, size_t c) : rows(r), columns(c), _matrix((float*)_aligned_malloc(r * c * sizeof(float), 64)) {}
 
-	~matrix() { if (_matrix != nullptr) { _aligned_free(_matrix); } }
+	~matrix() { if (_matrix) { _aligned_free(_matrix); } }
 };
 
 std::string matrix_to_string(const matrix& a);
